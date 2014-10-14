@@ -27,7 +27,7 @@ using System;
 
 namespace NLua.Event
 {
-	#if USE_KOPILUA
+	#if !USE_KERALUA
 	using LuaCore  = KopiLua.Lua;
 	using LuaState = KopiLua.LuaState;
 	using LuaDebug = KopiLua.LuaDebug;

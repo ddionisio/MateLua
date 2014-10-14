@@ -31,7 +31,7 @@ using NLua.Extensions;
 
 namespace NLua
 {
-	#if USE_KOPILUA
+	#if !USE_KERALUA
 	using LuaCore  = KopiLua.Lua;
 	using LuaState = KopiLua.LuaState;
 	#else

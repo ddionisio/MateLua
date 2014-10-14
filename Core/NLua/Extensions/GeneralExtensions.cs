@@ -44,7 +44,7 @@ namespace NLua.Extensions
 		/// </returns>
 		/// 
 		
-#if USE_KOPILUA
+#if !USE_KERALUA
 		public static bool IsNull (object obj)
 		{
 			return (obj == null);

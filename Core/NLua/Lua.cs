@@ -38,7 +38,7 @@ using NLua.Extensions;
 
 namespace NLua
 {
-	#if USE_KOPILUA
+	#if !USE_KERALUA
 	using LuaCore  = KopiLua.Lua;
 	using LuaState = KopiLua.LuaState;
 	using LuaHook  = KopiLua.LuaHook;
@@ -966,7 +966,7 @@ end
 		[MonoTouch.MonoPInvokeCallback (typeof (LuaHook))]
 #endif
 		[System.Runtime.InteropServices.AllowReversePInvokeCalls]
-#if USE_KOPILUA
+#if !USE_KERALUA
 		static void DebugHookCallback (LuaState luaState, LuaDebug debug)
 		{
 #else

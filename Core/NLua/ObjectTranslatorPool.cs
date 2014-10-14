@@ -27,7 +27,7 @@ using System.Collections.Generic;
 
 namespace NLua
 {
-	#if USE_KOPILUA
+	#if !USE_KERALUA
 	using LuaCore  = KopiLua.Lua;
 	using LuaState = KopiLua.LuaState;
 	#else
