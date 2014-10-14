@@ -158,7 +158,7 @@ namespace KopiLua
 			return LuaPCall (L, nargs, nresults, errfunc);
 		}
 
-
+		
 		public static int LuaNetLoadBuffer (LuaState L, string buff, uint sz, string name)
 		{
 			if (sz == 0)
@@ -166,7 +166,7 @@ namespace KopiLua
 			return LuaLLoadBuffer (L, buff, sz, name);
 		}
 
-
+		
 		public static int LuaNetLoadBuffer (LuaState L, byte [] buff, uint sz, string name)
 		{
 			return LuaLLoadBuffer (L, buff, sz, name);
@@ -187,7 +187,7 @@ namespace KopiLua
 			return LuaEqual (L, idx1, idx2);
 		}
 
-
+		
 		public static void LuaNetPushLString (LuaState L, string s, uint len)
 		{
 			LuaPushLString (L, s, len);

@@ -110,7 +110,7 @@ namespace KopiLua
 		public static void LuaCObjBarrierT(LuaState L, Table t, object o)
 			{ if (IsWhite(obj2gco(o)) && IsBlack(obj2gco(t))) LuaCBarrierBack(L,t); }
 
-
+		
 		public const uint GCSTEPSIZE	= 1024;
 		public const int GCSWEEPMAX		= 40;
 		public const int GCSWEEPCOST	= 10;
@@ -225,7 +225,7 @@ namespace KopiLua
 
 
 		/* move `dead' udata that need finalization to list `tmudata' */
-
+		
 		public static uint LuaCSeparateUData (LuaState L, int all) {
 		  GlobalState g = G(L);
 		  uint deadmem = 0;

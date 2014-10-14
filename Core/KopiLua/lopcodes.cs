@@ -65,11 +65,11 @@ namespace KopiLua
 		//public const int MAXARG_sBx			= System.Int32.MaxValue;
 		//#endif
 
-
+		
 		public const uint MAXARG_A        = (uint)((1 << (int)SIZE_A) -1);
-
+		
 		public const uint MAXARG_B		  = (uint)((1 << (int)SIZE_B) -1);
-
+		
 		public const uint MAXARG_C        = (uint)((1 << (int)SIZE_C) -1);
 
 

@@ -35,9 +35,9 @@ namespace KopiLua
 
 		public class Mbuffer {
 		  public CharPtr buffer = new CharPtr();
-
+          
 		  public uint n;
-
+          
 		  public uint buffsize;
 		};
 
@@ -47,9 +47,9 @@ namespace KopiLua
 		}
 
 		public static CharPtr luaZ_buffer(Mbuffer buff)	{return buff.buffer;}
-
+		
 		public static uint luaZ_sizebuffer(Mbuffer buff) { return buff.buffsize; }
-
+		
 		public static uint luaZ_bufflen(Mbuffer buff)	{return buff.n;}
 		public static void luaZ_resetbuffer(Mbuffer buff) {buff.n = 0;}
 
@@ -69,10 +69,10 @@ namespace KopiLua
 		/* --------- Private Part ------------------ */
 
 		public class Zio {
-
+			
 			public uint n;			/* bytes still unread */
 			public CharPtr p;			/* current position in buffer */
-
+			
 			public lua_Reader reader;
 			public object data;			/* additional data */
 			public LuaState L;			/* Lua state (for reader) */
@@ -112,7 +112,7 @@ namespace KopiLua
 		  return char2int(z.p[0]);
 		}
 
-
+		
 		public static void luaZ_init(LuaState L, ZIO z, lua_Reader reader, object data)
 		{
 		  z.L = L;
@@ -125,7 +125,7 @@ namespace KopiLua
 
 
 		/* --------------------------------------------------------------- read --- */
-
+		
 		public static uint luaZ_read (ZIO z, CharPtr b, uint n) {
 		  b = new CharPtr(b);
 		  while (n != 0) {
@@ -143,7 +143,7 @@ namespace KopiLua
 		}
 
 		/* ------------------------------------------------------------------------ */
-
+		
 		public static CharPtr luaZ_openspace (LuaState L, Mbuffer buff, uint n) {
 		  if (n > buff.buffsize) {
 			if (n < LUAMINBUFFER) n = LUAMINBUFFER;

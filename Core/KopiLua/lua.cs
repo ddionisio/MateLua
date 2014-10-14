@@ -20,7 +20,7 @@ namespace KopiLua
 
 	public delegate int LuaNativeFunction(LuaState L);
 
-
+	
 	public partial class Lua
 	{
 		private static bool RunningOnUnix
@@ -86,9 +86,9 @@ namespace KopiLua
 		/*
 		** functions that read/write blocks when loading/dumping Lua chunks
 		*/
-
+		
         public delegate CharPtr lua_Reader(LuaState L, object ud, out uint sz);
-
+		
 		public delegate int lua_Writer(LuaState L, CharPtr p, uint sz, object ud);
 
 
@@ -167,7 +167,7 @@ namespace KopiLua
             LuaPushCClosure(L, f, 0);
         }
 
-
+		
         public static uint LuaStrLen(LuaState L, int i)
         {
             return LuaObjectLen(L, i);

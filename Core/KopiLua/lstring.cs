@@ -61,7 +61,7 @@ namespace KopiLua
 		  tb.hash = newhash;
 		}
 
-
+		
 		public static TString newlstr (LuaState L, CharPtr str, uint l,
 											   uint h) {
 		  TString ts;
@@ -88,7 +88,7 @@ namespace KopiLua
 		  return ts;
 		}
 
-
+		
 		public static TString luaS_newlstr (LuaState L, CharPtr str, uint l) {
 		  GCObject o;
 		  uint h = (uint)l;  /* seed */
@@ -111,7 +111,7 @@ namespace KopiLua
 		  return res;
 		}
 
-
+		
 		public static Udata luaS_newudata(LuaState L, uint s, Table e)
 		{
 			Udata u = new Udata();

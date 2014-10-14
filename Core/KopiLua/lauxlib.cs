@@ -270,7 +270,7 @@ namespace KopiLua
 
 		public static CharPtr LuaLCheckLString(LuaState L, int narg) {uint len; return LuaLCheckLString(L, narg, out len);}
 
-
+		
 		public static CharPtr LuaLCheckLString (LuaState L, int narg, out uint len) {
 		  CharPtr s = LuaToLString(L, narg, out len);
 		  if (s==null) TagError(L, narg, LUA_TSTRING);
@@ -281,7 +281,7 @@ namespace KopiLua
 		public static CharPtr LuaLOptLString (LuaState L, int narg, CharPtr def) {
 			uint len; return LuaLOptLString (L, narg, def, out len); }
 
-
+		
 		public static CharPtr LuaLOptLString (LuaState L, int narg, CharPtr def, out uint len) {
 		  if (LuaIsNoneOrNil(L, narg)) {
 			len = (uint)((def != null) ? strlen(def) : 0);
@@ -550,7 +550,7 @@ namespace KopiLua
 			return new CharPtr(B.buffer, B.p);
 		}
 
-
+		
 		public static void LuaLAddLString (LuaLBuffer B, CharPtr s, uint l) {
 			while (l-- != 0)
 			{
@@ -650,7 +650,7 @@ namespace KopiLua
 		  public CharPtr buff = new char[LUAL_BUFFERSIZE];
 		};
 
-
+		
 		public static CharPtr GetF (LuaState L, object ud, out uint size) {
 		  size = 0;
 		  LoadF lf = (LoadF)ud;
@@ -718,7 +718,7 @@ namespace KopiLua
 
 		public class LoadS {
 		  public CharPtr s;
-
+          
 		  public uint size;
 		};
 
@@ -732,7 +732,7 @@ namespace KopiLua
 		  return ls.s;
 		}
 
-
+		
 		public static int LuaLLoadBuffer(LuaState L, CharPtr buff, uint size,
 										CharPtr name) {
 		  LoadS ls = new LoadS();

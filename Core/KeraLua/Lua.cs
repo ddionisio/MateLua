@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace KeraLua
 {
-	public delegate int LuaNativeFunction (LuaState luaState);
+	public delegate int LuaNativeFunction (KeraLua.LuaState luaState);
 
 	public static partial class Lua
 	{
@@ -156,7 +156,7 @@ namespace KeraLua
 			NativeMethods.LuaRawSetI (luaState, tableIndex, index);
 		}
 
-
+		
 		public static IntPtr LuaNewUserData (IntPtr luaState, uint size)
 		{
 			return NativeMethods.LuaNewUserData (luaState, size);
@@ -207,7 +207,11 @@ namespace KeraLua
 			IntPtr ptr = NativeMethods.LuaToCFunction (luaState, index);
 			if (ptr == IntPtr.Zero)
 				return null;
+#if NETFX_CORE
+			LuaNativeFunction function = Marshal.GetDelegateForFunctionPointer <LuaNativeFunction> (ptr);
+#else
 			LuaNativeFunction function = Marshal.GetDelegateForFunctionPointer (ptr, typeof (LuaNativeFunction)) as LuaNativeFunction;
+#endif
 			return function;
 		}
 
@@ -223,7 +227,7 @@ namespace KeraLua
 			return NativeMethods.LuaToBoolean (luaState, index);
 		}
 
-
+		
 		public static CharPtr LuaToLString (IntPtr luaState, int index, out uint strLen)
 		{
 			return NativeMethods.LuaToLString (luaState, index, out strLen);
@@ -251,7 +255,7 @@ namespace KeraLua
 			NativeMethods.LuaPushBoolean (luaState, value);
 		}
 
-
+		
 		public static void LuaNetPushLString (IntPtr luaState, string str, uint size)
 		{
 			NativeMethods.LuaNetPushLString (luaState, str, size);
@@ -282,14 +286,14 @@ namespace KeraLua
 			return NativeMethods.LuaLGetMetafield (luaState, stackPos, field);
 		}
 
-
+		
 		public static int LuaNetLoadBuffer (IntPtr luaState, string buff, uint size, string name)
 		{
 			return NativeMethods.LuaNetLoadBuffer (luaState, buff, size, name);
 
 		}
 
-
+		
 		public static int LuaNetLoadBuffer (IntPtr luaState, byte [] buff, uint size, string name)
 		{
 			return NativeMethods.LuaNetLoadBuffer (luaState, buff, size, name);
@@ -332,7 +336,7 @@ namespace KeraLua
 
 		public static int LuaSetHook (IntPtr luaState, LuaHook func, int mask, int count)
 		{
-			IntPtr funcHook = Marshal.GetFunctionPointerForDelegate (func);
+			IntPtr funcHook = func == null ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate (func);
 			return NativeMethods.LuaSetHook (luaState, funcHook, mask, count);
 		}
 
@@ -380,7 +384,11 @@ namespace KeraLua
 			try {
 				Marshal.StructureToPtr (ar, pDebug, false);
 				ret = NativeMethods.LuaGetInfo (luaState, what, pDebug);
+#if NETFX_CORE
+				ar = Marshal.PtrToStructure <LuaDebug> (pDebug);
+#else
 				ar = (LuaDebug)Marshal.PtrToStructure (pDebug, typeof (LuaDebug));
+#endif
 			} finally {
 				Marshal.FreeHGlobal (pDebug);
 			}
@@ -394,7 +402,11 @@ namespace KeraLua
 			try {
 				Marshal.StructureToPtr (ar, pDebug, false);
 				ret = NativeMethods.LuaGetStack (luaState, level, pDebug);
+#if NETFX_CORE
+				ar = Marshal.PtrToStructure<LuaDebug> (pDebug);
+#else
 				ar = (LuaDebug)Marshal.PtrToStructure (pDebug, typeof (LuaDebug));
+#endif
 			} finally {
 				Marshal.FreeHGlobal (pDebug);
 			}

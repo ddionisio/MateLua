@@ -162,7 +162,7 @@ namespace KopiLua
 		  LuaXLexError(ls, msg, ls.t.token);
 		}
 
-
+		
 		public static TString LuaXNewString(LexState ls, CharPtr str, uint l)
 		{
 		  LuaState L = ls.L;

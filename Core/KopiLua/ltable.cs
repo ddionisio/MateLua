@@ -537,7 +537,7 @@ namespace KopiLua
 		  }
 		}
 
-
+		
 		public static int unbound_search (Table t, uint j) {
 		  uint i = j;  /* i is zero or a present index */
 		  j++;
