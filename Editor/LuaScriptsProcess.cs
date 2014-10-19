@@ -20,7 +20,7 @@ namespace M8.Lua {
                 int splitInd = luaScriptDirInd+scriptDir.Length;
                 int subInd = splitInd + 1, subLen = path.Length - splitInd - 4;
                 if(subInd < path.Length && subLen > 0)
-                    return destDir + path.Substring(splitInd + 1, path.Length - splitInd - 4) + "txt";
+                    return destDir + path.Substring(splitInd + 1, path.Length - splitInd - 4) + "bytes";
                 else
                     Debug.Log("Unable to process: "+path);
             }

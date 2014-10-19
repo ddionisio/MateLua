@@ -8,31 +8,22 @@ namespace UniLua
 {
 	internal class LuaFile
 	{
-		private static readonly string LUA_ROOT = System.IO.Path.Combine(Application.streamingAssetsPath, "LuaRoot");
+		//private static readonly string LUA_ROOT = System.IO.Path.Combine(Application.streamingAssetsPath, "LuaRoot");
 
 		public static FileLoadInfo OpenFile( string filename )
 		{
-			var path = System.IO.Path.Combine(LUA_ROOT, filename);
-			return new FileLoadInfo( File.Open( path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite ) );
+            return new FileLoadInfo(LuaFileManager.Open(filename));
 		}
 
 		public static bool Readable( string filename )
 		{
-			var path = System.IO.Path.Combine(LUA_ROOT, filename);
-			try {
-				using( var stream = File.Open( path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite ) ) {
-					return true;
-				}
-			}
-			catch( Exception ) {
-				return false;
-			}
+            return LuaFileManager.Readable(filename);
 		}
 	}
 
-	internal class FileLoadInfo : ILoadInfo, IDisposable
+    internal class FileLoadInfo : ILoadInfo, IDisposable
 	{
-		public FileLoadInfo( FileStream stream )
+		public FileLoadInfo( ILoadStreamer stream )
 		{
 			Stream = stream;
 			Buf = new Queue<byte>();
@@ -66,7 +57,7 @@ namespace UniLua
 		}
 
 		private const string UTF8_BOM = "\u00EF\u00BB\u00BF";
-		private FileStream 	Stream;
+        private ILoadStreamer Stream;
 		private Queue<byte>	Buf;
 
 		private void Save( byte b )
@@ -111,6 +102,5 @@ namespace UniLua
 			}
 		}
 	}
-
 }
 
