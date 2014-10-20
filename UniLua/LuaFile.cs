@@ -12,12 +12,12 @@ namespace UniLua
 
 		public static FileLoadInfo OpenFile( string filename )
 		{
-            return new FileLoadInfo(LuaFileManager.Open(filename));
+            return new FileLoadInfo(LuaFileManager.instance.Open(filename));
 		}
 
 		public static bool Readable( string filename )
 		{
-            return LuaFileManager.Readable(filename);
+            return LuaFileManager.instance.Readable(filename);
 		}
 	}
 

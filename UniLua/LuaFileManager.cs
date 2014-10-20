@@ -5,25 +5,108 @@ using System.IO;
 using System.Collections.Generic;
 
 namespace UniLua {
+    public enum LuaPackageMode {
+        Resource, //All lua files will be read via Resources
+        LocalStream, //All lua files will be read from Application.streamingAssetsPath
+        Bundle, //All lua files will be read from AssetBundle
+        Custom //
+    }
+
     public interface ILoadStreamer {
+        /// <summary>
+        /// Read a byte, return -1 if end of stream
+        /// </summary>
         int ReadByte();
+
         void Dispose();
     }
 
     public interface ILuaPackageReader {
-        ILoadStreamer LuaPackageReader_Open(object packageData, string basePath, string filepath);
-        bool LuaPackageReader_Readable(object packageData, string basePath, string filepath);
+        ILoadStreamer Open(object packageData, string basePath, string filepath);
+        bool Readable(object packageData, string basePath, string filepath);
     }
 
-    public struct LuaPackage {
-        public enum Mode {
-            Resource,
-            LocalStream,
-            Bundle,
-            Custom
+    public class LuaFileManager {
+        public const string defaultBasePath = "Lua";
+
+        public static LuaFileManager instance { 
+            get {
+                if(mInstance == null)
+                    mInstance = new LuaFileManager();
+                return mInstance;
+            } 
+        }
+                
+        /// <summary>
+        /// Note: If mode is Bundle, ensure that the data is an AssetBundle
+        /// </summary>
+        public void SetRoot(string basePath, LuaPackageMode mode, object data = null, ILuaPackageReader api = null) {
+            mDefault.mode = mode;
+            mDefault.basePath = basePath;
+            mDefault.data = data;
+            mDefault.api = api;
         }
 
-        public Mode mode;
+        /// <summary>
+        /// Note: If mode is Bundle, ensure that the data is an AssetBundle
+        /// </summary>
+        public void AddPackage(string name, string basePath, LuaPackageMode mode, object data, ILuaPackageReader api) {
+            LuaPackage package = new LuaPackage() { basePath=basePath, mode=mode, data=data, api=api };
+            if(mPackages.ContainsKey(name))
+                mPackages[name] = package;
+            else
+                mPackages.Add(name, package);
+        }
+
+        public void RemovePackage(string name) {
+            mPackages.Remove(name);
+        }
+
+        internal ILoadStreamer Open(string filename) {
+            string packageFilePath;
+            return GrabPackage(filename, out packageFilePath).Open(packageFilePath);
+        }
+
+        internal bool Readable(string filename) {
+            string packageFilePath;
+            return GrabPackage(filename, out packageFilePath).Readable(packageFilePath);
+        }
+
+        private readonly char[] mDirDelim = new char[] { '\\', '/' };
+
+        private LuaPackage GrabPackage(string filename, out string packageFilePath) {
+            string packageName;
+
+            int splitInd = filename.IndexOfAny(mDirDelim);
+            if(splitInd != -1) {
+                packageName = filename.Substring(0, splitInd);
+                packageFilePath = filename.Substring(splitInd+1);
+            }
+            else { //no folder path?
+                packageFilePath = filename;
+                return mDefault;
+            }
+
+            //see if packageName matches, otherwise assume it is in default package
+            LuaPackage package;
+            if(!mPackages.TryGetValue(packageName, out package)) {
+                packageFilePath = filename;
+                return mDefault;
+            }
+
+            return package;
+        }
+
+        private static LuaFileManager mInstance = null;
+
+        private Dictionary<string, LuaPackage> mPackages = new Dictionary<string, LuaPackage>();
+
+        //default is Resources, with root dir: Lua
+        private LuaPackage mDefault = new LuaPackage() { mode=LuaPackageMode.Resource, basePath=defaultBasePath };
+    }
+
+    internal struct LuaPackage {
+        public LuaPackageMode mode;
         public string basePath; //prepend
         public object data; //AssetBundle for bundle, anything for custom
         public ILuaPackageReader api; //for custom
@@ -35,7 +118,7 @@ namespace UniLua {
             int dotInd;
 
             switch(mode) {
-                case Mode.Resource:
+                case LuaPackageMode.Resource:
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
                     if(dotInd != -1) filepath = filepath.Substring(0, dotInd);
@@ -51,7 +134,7 @@ namespace UniLua {
                     else
                         return new ResourceLoadStreamer(filepath);
 
-                case Mode.LocalStream:
+                case LuaPackageMode.LocalStream:
                     using(StringWriter sb = new StringWriter()) {
                         sb.Write(Application.streamingAssetsPath);
                         sb.Write('/');
@@ -63,7 +146,7 @@ namespace UniLua {
                         return new FileLoadStreamer(sb.ToString());
                     }
 
-                case Mode.Bundle:
+                case LuaPackageMode.Bundle:
                     //TODO: async?
                     AssetBundle ab = data as AssetBundle;
 
@@ -83,8 +166,8 @@ namespace UniLua {
                     else
                         return new ByteLoadStreamer((ab.Load(filepath) as TextAsset).bytes);
 
-                case Mode.Custom:
-                    return api.LuaPackageReader_Open(data, basePath, filepath);
+                case LuaPackageMode.Custom:
+                    return api.Open(data, basePath, filepath);
             }
             return null;
         }
@@ -96,7 +179,7 @@ namespace UniLua {
             int dotInd;
 
             switch(mode) {
-                case Mode.Resource:
+                case LuaPackageMode.Resource:
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
                     if(dotInd != -1) filepath = filepath.Substring(0, dotInd);
@@ -128,7 +211,7 @@ namespace UniLua {
                             return false;
                     }   
 
-                case Mode.LocalStream:
+                case LuaPackageMode.LocalStream:
                     using(StringWriter sb = new StringWriter()) {
                         sb.Write(Application.streamingAssetsPath);
                         sb.Write('/');
@@ -140,7 +223,7 @@ namespace UniLua {
                         return File.Exists(sb.ToString());
                     }
 
-                case Mode.Bundle:
+                case LuaPackageMode.Bundle:
                     AssetBundle ab = data as AssetBundle;
 
                     //truncate extension
@@ -159,78 +242,11 @@ namespace UniLua {
                     else
                         return ab.Contains(filepath);
 
-                case Mode.Custom:
-                    return api.LuaPackageReader_Readable(data, basePath, filepath);
+                case LuaPackageMode.Custom:
+                    return api.Readable(data, basePath, filepath);
             }
 
             return false;
-        }
-    }
-
-    public struct LuaFileManager {
-        private static Dictionary<string, LuaPackage> mPackages = new Dictionary<string, LuaPackage>();
-
-        //default is Resources, with root dir: Lua
-        private static LuaPackage mDefault = new LuaPackage() { mode=LuaPackage.Mode.Resource, basePath="Lua" };
-
-        /// <summary>
-        /// Note: If mode is Bundle, ensure that the data is an AssetBundle
-        /// </summary>
-        public static void SetRoot(string basePath, LuaPackage.Mode mode, object data, ILuaPackageReader api) {
-            mDefault.mode = mode;
-            mDefault.basePath = basePath;
-            mDefault.data = data;
-            mDefault.api = api;
-        }
-
-        /// <summary>
-        /// Note: If mode is Bundle, ensure that the data is an AssetBundle
-        /// </summary>
-        public static void AddPackage(string name, string basePath, LuaPackage.Mode mode, object data, ILuaPackageReader api) {
-            LuaPackage package = new LuaPackage() { basePath=basePath, mode=mode, data=data, api=api };
-            if(mPackages.ContainsKey(name))
-                mPackages[name] = package;
-            else
-                mPackages.Add(name, package);
-        }
-
-        public static void RemovePackage(string name) {
-            mPackages.Remove(name);
-        }
-
-        internal static ILoadStreamer Open(string filename) {
-            string packageFilePath;
-            return GrabPackage(filename, out packageFilePath).Open(packageFilePath);
-        }
-
-        internal static bool Readable(string filename) {
-            string packageFilePath;
-            return GrabPackage(filename, out packageFilePath).Readable(packageFilePath);
-        }
-
-        private static readonly char[] dirDelim = new char[] { '\\', '/' };
-
-        private static LuaPackage GrabPackage(string filename, out string packageFilePath) {
-            string packageName;
-
-            int splitInd = filename.IndexOfAny(dirDelim);
-            if(splitInd != -1) {
-                packageName = filename.Substring(0, splitInd);
-                packageFilePath = filename.Substring(splitInd+1);
-            }
-            else { //no folder path?
-                packageFilePath = filename;
-                return mDefault;
-            }
-
-            //see if packageName matches, otherwise assume it is in default package
-            LuaPackage package;
-            if(!mPackages.TryGetValue(packageName, out package)) {
-                packageFilePath = filename;
-                return mDefault;
-            }
-
-            return package;
         }
     }
 
@@ -252,13 +268,16 @@ namespace UniLua {
 
     internal class ResourceLoadStreamer : ILoadStreamer {
         public int ReadByte() {
+            if(mPos == mBytes.Length) return -1;
+
             int ret = mBytes[mPos];
             mPos++;
             return ret;
         }
 
         public void Dispose() {
-            Resources.UnloadAsset(mAsset);
+            //TODO: might be better to just unload elsewhere
+            //Resources.UnloadAsset(mAsset);
         }
 
         public ResourceLoadStreamer(string path) {
@@ -274,6 +293,8 @@ namespace UniLua {
 
     internal class ByteLoadStreamer : ILoadStreamer {
         public int ReadByte() {
+            if(mPos == mBytes.Length) return -1;
+
             int ret = mBytes[mPos];
             mPos++;
             return ret;
