@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿#define MATE_LUA_TRACE
+
+using UnityEngine;
 using System;
 using System.Collections;
 
@@ -7,8 +9,20 @@ using UniLua;
 namespace M8.Lua {
     [AddComponentMenu("M8/Lua/Behaviour")]
     public class LuaBehaviour : MonoBehaviour {
-        private const string luaMethodAwake = "Awake";
-        private const string luaMethodStart = "Start";
+        private const string luaMethodAwake = "awake";
+        private const string luaMethodStart = "start";
+        private const string luaMethodOnEnable = "onEnable";
+        private const string luaMethodOnDisable = "onDisable";
+        private const string luaMethodOnDestroy = "onDestroy";
+
+        private const string luaMethodUpdate = "update";
+        private const string luaMethodLateUpdate = "lateUpdate";
+        private const string luaMethodFixedUpdate = "fixedUpdate";
+
+        private const string luaMethodOnSpawned = "onSpawned";
+        private const string luaMethodOnDespawned = "onDespawned";
+
+        private const int nil = (int)LuaType.LUA_TNIL;
 
         public string scriptPath; //path to lua file
         public TextAsset scriptText; //if code path is empty, use this for loading
@@ -16,9 +30,44 @@ namespace M8.Lua {
         private ILuaState mLua;
 
         private int mLuaMethodStart;
+        private int mLuaMethodOnEnable;
+        private int mLuaMethodOnDisable;
+        private int mLuaMethodOnDestroy;
+
+        private int mLuaMethodOnSpawned;
+        private int mLuaMethodOnDespawned;
 
         public ILuaState lua { get { return mLua; } }
 
+        //Mate Calls
+
+        void OnSpawned() {
+            if(mLuaMethodOnSpawned != nil)
+                CallMethod(mLuaMethodOnSpawned);
+        }
+
+        void OnDespawned() {
+            if(mLuaMethodOnDespawned != nil)
+                CallMethod(mLuaMethodOnDespawned);
+        }
+
+        //Unity Calls
+                
+        void OnDestroy() {
+            if(mLuaMethodOnDestroy != nil)
+                CallMethod(mLuaMethodOnDestroy);
+        }
+
+        void OnEnable() {
+            if(mLuaMethodOnEnable != nil)
+                CallMethod(mLuaMethodOnEnable);
+        }
+
+        void OnDisable() {
+            if(mLuaMethodOnDisable != nil)
+                CallMethod(mLuaMethodOnDisable);
+        }
+                
         void Awake() {
             //init lua
             mLua = LuaAPI.NewState();
@@ -30,26 +79,52 @@ namespace M8.Lua {
             }
 
             if(!mLua.IsTable(-1)) {
-                throw new Exception("Framework main's return value is not a table.");
+                throw new Exception("Lua script's return value is not a table.");
             }
 
-            //store callbacks
+            //grab callbacks from table
             int awakeInd = GetMethod(luaMethodAwake);
 
             mLuaMethodStart = GetMethod(luaMethodStart);
+            mLuaMethodOnEnable = GetMethod(luaMethodOnEnable);
+            mLuaMethodOnDisable = GetMethod(luaMethodOnDisable);
+            mLuaMethodOnDestroy = GetMethod(luaMethodOnDestroy);
 
-            mLua.Pop(1);
+            mLuaMethodOnSpawned = GetMethod(luaMethodOnSpawned);
+            mLuaMethodOnDespawned = GetMethod(luaMethodOnDespawned);
+
+            int updateInd = GetMethod(luaMethodUpdate);
+            if(updateInd != nil) {
+                M8.Auxiliary.AuxUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxUpdate>(gameObject);
+                aux.callback += delegate() { CallMethod(updateInd); };
+            }
+
+            int fixedUpdateInd = GetMethod(luaMethodFixedUpdate);
+            if(fixedUpdateInd != nil) {
+                M8.Auxiliary.AuxFixedUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxFixedUpdate>(gameObject);
+                aux.callback += delegate() { CallMethod(fixedUpdateInd); };
+            }
+
+            int lateUpdateInd = GetMethod(luaMethodLateUpdate);
+            if(lateUpdateInd != nil) {
+                M8.Auxiliary.AuxLateUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxLateUpdate>(gameObject);
+                aux.callback += delegate() { CallMethod(lateUpdateInd); };
+            }
+            
+            mLua.Pop(1); //done with table
 
             //awake
-            if(awakeInd == (int)LuaType.LUA_TNIL)
+            if(awakeInd != nil)
                 CallMethod(awakeInd);
         }
 
         // Use this for initialization
         void Start() {
-            if(mLuaMethodStart == (int)LuaType.LUA_TNIL)
+            if(mLuaMethodStart != nil)
                 CallMethod(mLuaMethodStart);
         }
+
+        //Internal
 
         /// <summary>
         /// Returns LuaType.LUA_TNIL if method is not found.

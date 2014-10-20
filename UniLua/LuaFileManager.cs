@@ -121,13 +121,19 @@ namespace UniLua {
                 case LuaPackageMode.Resource:
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
-                    if(dotInd != -1) filepath = filepath.Substring(0, dotInd);
 
                     if(!string.IsNullOrEmpty(basePath)) {
                         using(StringWriter sb = new StringWriter()) {
                             sb.Write(basePath);
                             sb.Write('/');
-                            sb.Write(filepath);
+
+                            //copy filepath, while replacing \ to /
+                            int fpCount = dotInd == -1 ? filepath.Length : dotInd;
+                            for(int i = 0; i < fpCount; i++) {
+                                char c = filepath[i];
+                                sb.Write(c == '\\' ? '/' : c);
+                            }
+
                             return new ResourceLoadStreamer(sb.ToString());
                         }
                     }
@@ -152,13 +158,18 @@ namespace UniLua {
 
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
-                    if(dotInd != -1) filepath = filepath.Substring(0, dotInd);
 
                     if(!string.IsNullOrEmpty(basePath)) {
                         using(StringWriter sb = new StringWriter()) {
                             sb.Write(basePath);
                             sb.Write('/');
-                            sb.Write(filepath);
+
+                            //copy filepath, while replacing \ to /
+                            int fpCount = dotInd == -1 ? filepath.Length : dotInd;
+                            for(int i = 0; i < fpCount; i++) {
+                                char c = filepath[i];
+                                sb.Write(c == '\\' ? '/' : c);
+                            }
                                                         
                             return new ByteLoadStreamer((ab.Load(sb.ToString()) as TextAsset).bytes);
                         }
@@ -182,13 +193,18 @@ namespace UniLua {
                 case LuaPackageMode.Resource:
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
-                    if(dotInd != -1) filepath = filepath.Substring(0, dotInd);
 
                     if(!string.IsNullOrEmpty(basePath)) {
                         using(StringWriter sb = new StringWriter()) {
                             sb.Write(basePath);
                             sb.Write('/');
-                            sb.Write(filepath);
+
+                            //copy filepath, while replacing \ to /
+                            int fpCount = dotInd == -1 ? filepath.Length : dotInd;
+                            for(int i = 0; i < fpCount; i++) {
+                                char c = filepath[i];
+                                sb.Write(c == '\\' ? '/' : c);
+                            }
 
                             //WTF, why is there no Exist or Contains function?
                             //TODO: cache?
@@ -228,13 +244,18 @@ namespace UniLua {
 
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
-                    if(dotInd != -1) filepath = filepath.Substring(0, dotInd);
 
                     if(!string.IsNullOrEmpty(basePath)) {
                         using(StringWriter sb = new StringWriter()) {
                             sb.Write(basePath);
                             sb.Write('/');
-                            sb.Write(filepath);
+
+                            //copy filepath, while replacing \ to /
+                            int fpCount = dotInd == -1 ? filepath.Length : dotInd;
+                            for(int i = 0; i < fpCount; i++) {
+                                char c = filepath[i];
+                                sb.Write(c == '\\' ? '/' : c);
+                            }
 
                             return ab.Contains(sb.ToString());
                         }

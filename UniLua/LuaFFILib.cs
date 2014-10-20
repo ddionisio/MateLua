@@ -466,6 +466,19 @@ namespace UniLua
 					case "System.Object":
 						return (object)lua.ToUserData( index );
 
+                    //TODO: more elegant solution
+                    case "UnityEngine.Vector3":
+                        lua.GetField(index, "x");
+                        float x = (float)lua.ToNumber(lua.GetTop());
+                        lua.GetField(index, "y");
+                        float y = (float)lua.ToNumber(lua.GetTop());
+                        lua.GetField(index, "z");
+                        float z = (float)lua.ToNumber(lua.GetTop());
+                        lua.Pop(1);
+                        lua.Pop(1);
+                        lua.Pop(1);
+                        return new UnityEngine.Vector3(x, y, z);
+
 					default: {
 						var u = lua.ToUserData(index);
 						if( u == null )
@@ -482,6 +495,7 @@ namespace UniLua
 		{
 			public FFIMethodBase( MethodBase minfo )
 			{
+                if(minfo == null) return;
 				Method = minfo;
 
 				var parameters = minfo.GetParameters();

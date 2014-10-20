@@ -202,6 +202,9 @@ local function new_class_mgr()
                     return inst_fields[key][2](self, key, value)
                 end
             end,
+			
+			__tostring = inst_methods.ToString,
+			__add = clsinfo.cls_methods.op_Addition,
         }
         return setmetatable({
             __this = this,
