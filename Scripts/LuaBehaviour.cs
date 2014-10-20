@@ -15,6 +15,8 @@ namespace M8.Lua {
 
         private ILuaState mLua;
 
+        private int mLuaMethodStart;
+
         public ILuaState lua { get { return mLua; } }
 
         void Awake() {
@@ -32,31 +34,37 @@ namespace M8.Lua {
             }
 
             //store callbacks
+            int awakeInd = GetMethod(luaMethodAwake);
+
+            mLuaMethodStart = GetMethod(luaMethodStart);
+
+            mLua.Pop(1);
 
             //awake
-            CallMethod(GetMethod(luaMethodAwake));    
+            if(awakeInd == (int)LuaType.LUA_TNIL)
+                CallMethod(awakeInd);
         }
 
         // Use this for initialization
         void Start() {
-            CallMethod(GetMethod(luaMethodStart));
+            if(mLuaMethodStart == (int)LuaType.LUA_TNIL)
+                CallMethod(mLuaMethodStart);
         }
 
         /// <summary>
-        /// Returns 0 if method is not found.
+        /// Returns LuaType.LUA_TNIL if method is not found.
         /// </summary>
         private int GetMethod(string name) {
             mLua.GetField(-1, name);
             if(!mLua.IsFunction(-1)) {
-                return 0;
+                mLua.Pop(1);
+                return (int)LuaType.LUA_TNIL;
             }
 
             return mLua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
         }
 
         private void CallMethod(int funcRef) {
-            if(funcRef == 0) return;
-
             mLua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
 
 #if MATE_LUA_TRACE
