@@ -187,8 +187,6 @@ namespace UniLua {
 
             switch(mode) {
                 case LuaPackageMode.Resource:
-                    UnityEngine.Object obj;
-
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
 
