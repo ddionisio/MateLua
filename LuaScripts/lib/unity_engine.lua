@@ -15,7 +15,6 @@ local function _init(_ENV)
         :field("float y")
         :field("float z")
 		:method("String ToString()")
-		:static_method("Vector3 op_Addition(Vector3, Vector3)")
 
     class("GameObject")
         :constructor("GameObject(String)")

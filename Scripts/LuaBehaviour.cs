@@ -110,12 +110,35 @@ namespace M8.Lua {
                 M8.Auxiliary.AuxLateUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxLateUpdate>(gameObject);
                 aux.callback += delegate() { CallMethod(lateUpdateInd); };
             }
-            
+                                    
             mLua.Pop(1); //done with table
 
+            //add some variables
+            mLua.CreateTable(0, 2);
+            mLua.PushLightUserData(gameObject);
+            mLua.SetField(-2, "__go");
+            mLua.PushCSharpFunction(goname);
+            mLua.SetField(-2, "name");
+            
+            mLua.SetGlobal("gameObject");
+            
             //awake
             if(awakeInd != nil)
                 CallMethod(awakeInd);
+        }
+
+        static int goname(ILuaState l) {
+            l.SetTop(1);
+            l.L_CheckType(1, LuaType.LUA_TTABLE);
+                        
+            l.GetField(1, "__go");
+            GameObject go = l.ToUserData(-1) as GameObject;
+
+            l.Pop(1);
+
+            l.PushString(go.name);
+
+            return 1;
         }
 
         // Use this for initialization
@@ -133,7 +156,7 @@ namespace M8.Lua {
             mLua.GetField(-1, name);
             if(!mLua.IsFunction(-1)) {
                 mLua.Pop(1);
-                return (int)LuaType.LUA_TNIL;
+                return nil;
             }
 
             return mLua.L_Ref(LuaDef.LUA_REGISTRYINDEX);

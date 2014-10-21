@@ -1,8 +1,8 @@
 local cs = require "ffi.cs"
 
-local CONSTRUCTOR   = "_New"
-local TYPE_ACCESS   = "_Type"
-local CONVERT_FROM  = "_ConvertFrom"
+local CONSTRUCTOR   = "new"
+local TYPE_ACCESS   = "getType"
+local CONVERT_FROM  = "cast"
 
 ----------------------------------------------------------------------
 
@@ -204,7 +204,6 @@ local function new_class_mgr()
             end,
 			
 			__tostring = inst_methods.ToString,
-			__add = clsinfo.cls_methods.op_Addition,
         }
         return setmetatable({
             __this = this,

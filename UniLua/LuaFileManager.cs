@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-using System;
+using System.Text;
 using System.IO;
 using System.Collections.Generic;
 
@@ -50,56 +50,52 @@ namespace UniLua {
         /// <summary>
         /// Note: If mode is Bundle, ensure that the data is an AssetBundle
         /// </summary>
-        public void AddPackage(string name, string basePath, LuaPackageMode mode, object data, ILuaPackageReader api) {
-            LuaPackage package = new LuaPackage() { basePath=basePath, mode=mode, data=data, api=api };
-            if(mPackages.ContainsKey(name))
-                mPackages[name] = package;
-            else
-                mPackages.Add(name, package);
+        public void AddPackage(string basePath, LuaPackageMode mode, object data, ILuaPackageReader api) {
+            mPackages.Add(new LuaPackage() { basePath=basePath, mode=mode, data=data, api=api });
         }
 
-        public void RemovePackage(string name) {
-            mPackages.Remove(name);
+        public void RemovePackage(string basePath) {
+            for(int i = 0; i < mPackages.Count; i++) {
+                LuaPackage package = mPackages[i];
+                if(package.basePath == basePath) {
+                    mPackages.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+
+        public void ClearPackages() {
+            mPackages.Clear();
         }
 
         internal ILoadStreamer Open(string filename) {
-            string packageFilePath;
-            return GrabPackage(filename, out packageFilePath).Open(packageFilePath);
+            //try packages first, starting from end
+            for(int i = mPackages.Count - 1; i >= 0; i--) {
+                ILoadStreamer loader = mPackages[i].Open(filename, mStrBuff);
+                if(loader != null)
+                    return loader;
+            }
+
+            //try root
+            return mDefault.Open(filename, mStrBuff);
         }
 
         internal bool Readable(string filename) {
-            string packageFilePath;
-            return GrabPackage(filename, out packageFilePath).Readable(packageFilePath);
-        }
-
-        private readonly char[] mDirDelim = new char[] { '\\', '/' };
-
-        private LuaPackage GrabPackage(string filename, out string packageFilePath) {
-            string packageName;
-
-            int splitInd = filename.IndexOfAny(mDirDelim);
-            if(splitInd != -1) {
-                packageName = filename.Substring(0, splitInd);
-                packageFilePath = filename.Substring(splitInd+1);
-            }
-            else { //no folder path?
-                packageFilePath = filename;
-                return mDefault;
+            //try packages first, starting from end
+            for(int i = mPackages.Count - 1; i >= 0; i--) {
+                if(mPackages[i].Readable(filename, mStrBuff))
+                    return true;
             }
 
-            //see if packageName matches, otherwise assume it is in default package
-            LuaPackage package;
-            if(!mPackages.TryGetValue(packageName, out package)) {
-                packageFilePath = filename;
-                return mDefault;
-            }
-
-            return package;
+            //try root
+            return mDefault.Readable(filename, mStrBuff);
         }
 
         private static LuaFileManager mInstance = null;
 
-        private Dictionary<string, LuaPackage> mPackages = new Dictionary<string, LuaPackage>();
+        private List<LuaPackage> mPackages = new List<LuaPackage>();
+
+        private StringBuilder mStrBuff = new StringBuilder(512);
 
         //default is Resources, with root dir: Lua
         private LuaPackage mDefault = new LuaPackage() { mode=LuaPackageMode.Resource, basePath=defaultBasePath };
@@ -114,43 +110,44 @@ namespace UniLua {
         /// <summary>
         /// Open given file. filepath is relative to this package's basePath
         /// </summary>
-        public ILoadStreamer Open(string filepath) {
-            int dotInd;
+        public ILoadStreamer Open(string filepath, StringBuilder sb) {
+            int dotInd, fpCount;
+            string fullpath;
 
             switch(mode) {
                 case LuaPackageMode.Resource:
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
+                                        
+                    sb.Length = 0;
 
                     if(!string.IsNullOrEmpty(basePath)) {
-                        using(StringWriter sb = new StringWriter()) {
-                            sb.Write(basePath);
-                            sb.Write('/');
-
-                            //copy filepath, while replacing \ to /
-                            int fpCount = dotInd == -1 ? filepath.Length : dotInd;
-                            for(int i = 0; i < fpCount; i++) {
-                                char c = filepath[i];
-                                sb.Write(c == '\\' ? '/' : c);
-                            }
-
-                            return new ResourceLoadStreamer(sb.ToString());
-                        }
+                        sb.Append(basePath);
+                        sb.Append('/');
                     }
-                    else
-                        return new ResourceLoadStreamer(filepath);
+
+                    //copy filepath, while replacing \ to /
+                    fpCount = dotInd == -1 ? filepath.Length : dotInd;
+                    for(int i = 0; i < fpCount; i++) {
+                        char c = filepath[i];
+                        sb.Append(c == '\\' ? '/' : c);
+                    }
+
+                    TextAsset ta = Resources.Load<TextAsset>(sb.ToString());
+                    return ta ? new ByteLoadStreamer(ta.bytes) : null;
 
                 case LuaPackageMode.LocalStream:
-                    using(StringWriter sb = new StringWriter()) {
-                        sb.Write(Application.streamingAssetsPath);
-                        sb.Write('/');
-                        if(!string.IsNullOrEmpty(basePath)) {
-                            sb.Write(basePath);
-                            sb.Write('/');
-                        }
-                        sb.Write(filepath);
-                        return new FileLoadStreamer(sb.ToString());
+                    sb.Length = 0;
+                    sb.Append(Application.streamingAssetsPath);
+                    sb.Append('/');
+                    if(!string.IsNullOrEmpty(basePath)) {
+                        sb.Append(basePath);
+                        sb.Append('/');
                     }
+                    sb.Append(filepath);
+
+                    fullpath = sb.ToString();
+                    return File.Exists(fullpath) ? new FileLoadStreamer(fullpath) : null;
 
                 case LuaPackageMode.Bundle:
                     //TODO: async?
@@ -159,23 +156,22 @@ namespace UniLua {
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
 
-                    if(!string.IsNullOrEmpty(basePath)) {
-                        using(StringWriter sb = new StringWriter()) {
-                            sb.Write(basePath);
-                            sb.Write('/');
+                    sb.Length = 0;
 
-                            //copy filepath, while replacing \ to /
-                            int fpCount = dotInd == -1 ? filepath.Length : dotInd;
-                            for(int i = 0; i < fpCount; i++) {
-                                char c = filepath[i];
-                                sb.Write(c == '\\' ? '/' : c);
-                            }
-                                                        
-                            return new ByteLoadStreamer((ab.Load(sb.ToString()) as TextAsset).bytes);
-                        }
+                    if(!string.IsNullOrEmpty(basePath)) {
+                        sb.Append(basePath);
+                        sb.Append('/');
                     }
-                    else
-                        return new ByteLoadStreamer((ab.Load(filepath) as TextAsset).bytes);
+
+                    //copy filepath, while replacing \ to /
+                    fpCount = dotInd == -1 ? filepath.Length : dotInd;
+                    for(int i = 0; i < fpCount; i++) {
+                        char c = filepath[i];
+                        sb.Append(c == '\\' ? '/' : c);
+                    }
+
+                    fullpath = sb.ToString();
+                    return ab.Contains(fullpath) ? new ByteLoadStreamer((ab.Load(fullpath) as TextAsset).bytes) : null;
 
                 case LuaPackageMode.Custom:
                     return api.Open(data, basePath, filepath);
@@ -186,58 +182,44 @@ namespace UniLua {
         /// <summary>
         /// Check if filepath exists. filepath is relative to this package's root
         /// </summary>
-        public bool Readable(string filepath) {
-            int dotInd;
+        public bool Readable(string filepath, StringBuilder sb) {
+            int dotInd, fpCount;
 
             switch(mode) {
                 case LuaPackageMode.Resource:
+                    UnityEngine.Object obj;
+
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
 
+                    sb.Length = 0;
+
                     if(!string.IsNullOrEmpty(basePath)) {
-                        using(StringWriter sb = new StringWriter()) {
-                            sb.Write(basePath);
-                            sb.Write('/');
-
-                            //copy filepath, while replacing \ to /
-                            int fpCount = dotInd == -1 ? filepath.Length : dotInd;
-                            for(int i = 0; i < fpCount; i++) {
-                                char c = filepath[i];
-                                sb.Write(c == '\\' ? '/' : c);
-                            }
-
-                            //WTF, why is there no Exist or Contains function?
-                            //TODO: cache?
-                            UnityEngine.Object obj = Resources.Load(sb.ToString());
-                            if(obj) {
-                                Resources.UnloadAsset(obj);
-                                return true;
-                            }
-                            else
-                                return false;
-                        }
+                        sb.Append(basePath);
+                        sb.Append('/');
                     }
-                    else {
-                        UnityEngine.Object obj = Resources.Load(filepath);
-                        if(obj) {
-                            Resources.UnloadAsset(obj);
-                            return true;
-                        }
-                        else
-                            return false;
-                    }   
+
+                    //copy filepath, while replacing \ to /
+                    fpCount = dotInd == -1 ? filepath.Length : dotInd;
+                    for(int i = 0; i < fpCount; i++) {
+                        char c = filepath[i];
+                        sb.Append(c == '\\' ? '/' : c);
+                    }
+
+                    //WTF, why is there no Exist or Contains function?
+                    //TODO: cache?
+                    return Resources.Load(sb.ToString()) != null;
 
                 case LuaPackageMode.LocalStream:
-                    using(StringWriter sb = new StringWriter()) {
-                        sb.Write(Application.streamingAssetsPath);
-                        sb.Write('/');
-                        if(!string.IsNullOrEmpty(basePath)) {
-                            sb.Write(basePath);
-                            sb.Write('/');
-                        }
-                        sb.Write(filepath);
-                        return File.Exists(sb.ToString());
+                    sb.Length = 0;
+                    sb.Append(Application.streamingAssetsPath);
+                    sb.Append('/');
+                    if(!string.IsNullOrEmpty(basePath)) {
+                        sb.Append(basePath);
+                        sb.Append('/');
                     }
+                    sb.Append(filepath);
+                    return File.Exists(sb.ToString());
 
                 case LuaPackageMode.Bundle:
                     AssetBundle ab = data as AssetBundle;
@@ -245,23 +227,21 @@ namespace UniLua {
                     //truncate extension
                     dotInd = filepath.LastIndexOf('.');
 
+                    sb.Length = 0;
+
                     if(!string.IsNullOrEmpty(basePath)) {
-                        using(StringWriter sb = new StringWriter()) {
-                            sb.Write(basePath);
-                            sb.Write('/');
-
-                            //copy filepath, while replacing \ to /
-                            int fpCount = dotInd == -1 ? filepath.Length : dotInd;
-                            for(int i = 0; i < fpCount; i++) {
-                                char c = filepath[i];
-                                sb.Write(c == '\\' ? '/' : c);
-                            }
-
-                            return ab.Contains(sb.ToString());
-                        }
+                        sb.Append(basePath);
+                        sb.Append('/');
                     }
-                    else
-                        return ab.Contains(filepath);
+
+                    //copy filepath, while replacing \ to /
+                    fpCount = dotInd == -1 ? filepath.Length : dotInd;
+                    for(int i = 0; i < fpCount; i++) {
+                        char c = filepath[i];
+                        sb.Append(c == '\\' ? '/' : c);
+                    }
+
+                    return ab.Contains(sb.ToString());
 
                 case LuaPackageMode.Custom:
                     return api.Readable(data, basePath, filepath);
@@ -286,32 +266,7 @@ namespace UniLua {
 
         private FileStream mStream;
     }
-
-    internal class ResourceLoadStreamer : ILoadStreamer {
-        public int ReadByte() {
-            if(mPos == mBytes.Length) return -1;
-
-            int ret = mBytes[mPos];
-            mPos++;
-            return ret;
-        }
-
-        public void Dispose() {
-            //TODO: might be better to just unload elsewhere
-            //Resources.UnloadAsset(mAsset);
-        }
-
-        public ResourceLoadStreamer(string path) {
-            //TODO: load async?
-            mAsset = Resources.Load<TextAsset>(path);
-            mBytes = mAsset.bytes;
-        }
-
-        private TextAsset mAsset;
-        private byte[] mBytes;
-        private int mPos = 0;
-    }
-
+    
     internal class ByteLoadStreamer : ILoadStreamer {
         public int ReadByte() {
             if(mPos == mBytes.Length) return -1;
