@@ -72,6 +72,9 @@ namespace M8.Lua {
             //init lua
             mLua = LuaAPI.NewState();
             mLua.L_OpenLibs();
+                        
+            //common unity libs
+            mLua.L_RequireF(Library.LGameObject.LIB_NAME, Library.LGameObject.OpenLib, false);
 
             ThreadStatus status = string.IsNullOrEmpty(scriptPath) ? mLua.L_DoString(scriptText.text) : mLua.L_DoFile(scriptPath);
             if(status != ThreadStatus.LUA_OK) {
@@ -114,20 +117,24 @@ namespace M8.Lua {
             mLua.Pop(1); //done with table
 
             //add some variables
-            mLua.CreateTable(0, 2);
+            mLua.PushLightUserData(gameObject);
+            mLua.SetGlobal("gameObject");
+
+            mLua.PushLightUserData(transform);
+            mLua.SetGlobal("transform");
+            
+            /*mLua.CreateTable(0, 2);
             mLua.PushLightUserData(gameObject);
             mLua.SetField(-2, "__go");
             mLua.PushCSharpFunction(goname);
-            mLua.SetField(-2, "name");
-            
-            mLua.SetGlobal("gameObject");
-            
+            mLua.SetField(-2, "name");*/
+                                    
             //awake
             if(awakeInd != nil)
                 CallMethod(awakeInd);
         }
 
-        static int goname(ILuaState l) {
+        /*static int goname(ILuaState l) {
             l.SetTop(1);
             l.L_CheckType(1, LuaType.LUA_TTABLE);
                         
@@ -139,7 +146,7 @@ namespace M8.Lua {
             l.PushString(go.name);
 
             return 1;
-        }
+        }*/
 
         // Use this for initialization
         void Start() {
