@@ -38,8 +38,6 @@ namespace M8.Lua {
         private int mLuaMethodOnSpawned;
         private int mLuaMethodOnDespawned;
 
-        private Dictionary<int, IEnumerator> mInvokes;
-
         public ILuaState lua { get { return mLua; } }
 
         //Mate Calls
@@ -67,7 +65,7 @@ namespace M8.Lua {
         }
 
         void OnDisable() {
-            LuaCancelAllInvokes();
+            StopAllCoroutines();
 
             if(mLuaMethodOnDisable != nil)
                 CallMethod(mLuaMethodOnDisable);
@@ -118,8 +116,6 @@ namespace M8.Lua {
                 M8.Auxiliary.AuxLateUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxLateUpdate>(gameObject);
                 aux.callback += delegate() { CallMethod(lateUpdateInd); };
             }
-                                    
-            mLua.Pop(1); //done with table
 
             //add some variables
             mLua.PushLightUserData(gameObject);
@@ -132,14 +128,22 @@ namespace M8.Lua {
             mLua.PushCSharpFunction(LuaInvoke);
             mLua.SetGlobal("invoke");
 
+            mLua.PushCSharpFunction(LuaInvokeRepeat);
+            mLua.SetGlobal("invokeRepeat");
+
             mLua.PushCSharpFunction(LuaCancelInvoke);
             mLua.SetGlobal("cancelInvoke");
-            
+
+            mLua.PushCSharpFunction(LuaCancelAllInvoke);
+            mLua.SetGlobal("cancelAllInvoke");
+                                    
             /*mLua.CreateTable(0, 2);
             mLua.PushLightUserData(gameObject);
             mLua.SetField(-2, "__go");
             mLua.PushCSharpFunction(goname);
             mLua.SetField(-2, "name");*/
+
+            mLua.Pop(1);
                                     
             //awake
             if(awakeInd != nil)
@@ -218,55 +222,75 @@ namespace M8.Lua {
             }
             return 1;
         }
-                
-        private int LuaInvoke(ILuaState lua) {
 
-            int funcRef;
-            if(lua.IsFunction(1)) {
-                lua.PushValue(1);
+        private int GetFuncRef(ILuaState lua, int ind) {
+            int funcRef = 0;
+
+            if(lua.IsFunction(ind)) {
+                lua.PushValue(ind);
                 funcRef = lua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
             }
-            else if(lua.IsString(1)) {
-                string f = lua.ToString(1);
+            else if(lua.IsString(ind)) {
+                string f = lua.ToString(ind);
                 lua.GetGlobal(f);
                 if(lua.IsFunction(-1))
                     funcRef = lua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
                 else {
-                    lua.L_ArgError(1, "Function not found: "+f);
-                    return 0;
+                    lua.Pop(1);
+                    lua.L_ArgError(ind, "Function not found: "+f);
                 }
             }
-            else {
-                lua.L_ArgError(1, "Argument is not a function or string.");
-                return 0;
-            }
-                                                
+            else
+                lua.L_ArgError(ind, "Argument is not a function or string.");
+
+            return funcRef;
+        }
+                
+        private int LuaInvoke(ILuaState lua) {
+
+            int funcRef = GetFuncRef(lua, 1);
+            if(funcRef == 0) return 0;
+               
             float time = (float)lua.L_CheckNumber(2);
 
             //TODO: n-arguments to pass
             //Debug.Log("narg: "+lua.GetTop());
-            
             IEnumerator e = DoInvoke(lua, funcRef, time);
 
-            if(mInvokes == null) mInvokes = new Dictionary<int, IEnumerator>();
-
-            mInvokes.Add(funcRef, e);
-
             StartCoroutine(e);
-            return 0;
-        }
 
-        private int LuaCancelInvoke(ILuaState lua) {
+            lua.PushLightUserData(e); //keep this if you want to cancel invoke
             return 1;
         }
 
-        private void LuaCancelAllInvokes() {
-            if(mInvokes != null) {
-                foreach(KeyValuePair<int, IEnumerator> pair in mInvokes)
-                    StopCoroutine(pair.Value);
+        private int LuaInvokeRepeat(ILuaState lua) {
 
-                mInvokes.Clear();
-            }
+            int funcRef = GetFuncRef(lua, 1);
+            if(funcRef == 0) return 0;
+
+            float time = (float)lua.L_CheckNumber(2);
+            float repeat = (float)lua.L_CheckNumber(3);
+
+            //TODO: n-arguments to pass
+            //Debug.Log("narg: "+lua.GetTop());
+            IEnumerator e = DoInvokeRepeat(lua, funcRef, time, repeat);
+
+            StartCoroutine(e);
+
+            lua.PushLightUserData(e); //keep this if you want to cancel invoke
+            return 1;
+        }
+
+        private int LuaCancelInvoke(ILuaState lua) {
+            IEnumerator e = lua.ToUserData(1) as IEnumerator;
+            if(e != null)
+                StopCoroutine(e);
+            return 0;
+        }
+
+        private int LuaCancelAllInvoke(ILuaState lua) {
+            StopAllCoroutines();
+            return 0;
         }
 
         private IEnumerator DoInvoke(ILuaState lua, int funcRef, float time) {
@@ -279,8 +303,24 @@ namespace M8.Lua {
             ThreadStatus status = lua.PCall(0, 0, 0);
             if(status != ThreadStatus.LUA_OK)
                 lua.L_Error("Error running function: "+lua.L_ToString(-1));
+        }
 
-            mInvokes.Remove(funcRef);
+        private IEnumerator DoInvokeRepeat(ILuaState lua, int funcRef, float time, float repeatRate) {
+            if(time > 0)
+                yield return new WaitForSeconds(time);
+            else
+                yield return null;
+
+            WaitForSeconds wait = new WaitForSeconds(repeatRate);
+            while(true) {
+                lua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
+                ThreadStatus status = lua.PCall(0, 0, 0);
+                if(status != ThreadStatus.LUA_OK) {
+                    lua.L_Error("Error running function: "+lua.L_ToString(-1));
+                    break;
+                }
+                yield return wait;
+            }
         }
     }
 }

@@ -41,7 +41,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>string</returns>
         private static int IsActiveSelf(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             lua.PushBoolean(go.activeSelf);
             return 1;
         }
@@ -51,7 +51,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>string</returns>
         private static int IsActiveInHierarchy(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             lua.PushBoolean(go.activeInHierarchy);
             return 1;
         }
@@ -60,7 +60,7 @@ namespace M8.Lua.Library {
         /// set given GameObject active. SetActive(go, bool)
         /// </summary>
         private static int SetActive(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             bool active = lua.ToBoolean(2);
             go.SetActive(active);
             return 0;
@@ -71,7 +71,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>string</returns>
         private static int GetName(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             lua.PushString(go.name);
             return 1;
         }
@@ -80,7 +80,7 @@ namespace M8.Lua.Library {
         /// set given GameObject name. SetName(go, string)
         /// </summary>
         private static int SetName(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             go.name = lua.L_CheckString(2);
             return 0;
         }
@@ -90,7 +90,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>layer index [0, 31]</returns>
         private static int GetLayer(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             lua.PushInteger(go.layer);
             return 1;
         }
@@ -99,7 +99,7 @@ namespace M8.Lua.Library {
         /// set given GameObject layer. SetTag(go, int)
         /// </summary>
         private static int SetLayer(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             go.layer = lua.L_CheckInteger(2);
             return 0;
         }
@@ -109,7 +109,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>tag</returns>
         private static int GetTag(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             lua.PushString(go.tag);
             return 1;
         }
@@ -118,7 +118,7 @@ namespace M8.Lua.Library {
         /// set given GameObject tag. SetTag(go, string)
         /// </summary>
         private static int SetTag(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             go.tag = lua.L_CheckString(2);
             return 0;
         }
@@ -128,7 +128,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>bool</returns>
         private static int CompareTag(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string tag = lua.L_CheckString(2);
             lua.PushBoolean(go.CompareTag(tag));
             return 1;
@@ -139,7 +139,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>component</returns>
         private static int GetComponent(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string type = lua.L_CheckString(2);
             Component c = go.GetComponent(type);
             if(c)
@@ -154,7 +154,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>component</returns>
         private static int GetComponentInChildren(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
             if(type != null) {
@@ -175,7 +175,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>component</returns>
         private static int GetComponentInParent(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
             if(type != null) {
@@ -196,7 +196,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>transform</returns>
         private static int GetTransform(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             lua.PushLightUserData(go.transform);
             return 1;
         }
@@ -206,7 +206,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>transform</returns>
         private static int GetCollider(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             Collider coll = go.collider;
             if(coll)
                 lua.PushLightUserData(go.collider);
@@ -220,7 +220,7 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>transform</returns>
         private static int GetRigidbody(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             Rigidbody body = go.rigidbody;
             if(body)
                 lua.PushLightUserData(go.rigidbody);
@@ -233,28 +233,35 @@ namespace M8.Lua.Library {
         /// Send message. SendMessage(go, method, var)
         /// </summary>
         private static int SendMessage(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string method = lua.L_CheckString(2);
-            switch(lua.Type(3)) {
-                case LuaType.LUA_TBOOLEAN:
-                    go.SendMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TNUMBER:
-                    go.SendMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TSTRING:
-                    go.SendMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TUINT64:
-                    go.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TLIGHTUSERDATA:
-                    go.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                default:
-                    lua.L_ArgError(3, "Incompatible Type");
-                    break;
+
+            if(lua.GetTop() >= 3) {
+                switch(lua.Type(3)) {
+                    case LuaType.LUA_TBOOLEAN:
+                        go.SendMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TNUMBER:
+                        go.SendMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TSTRING:
+                        go.SendMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TUINT64:
+                        go.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
+                        go.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    default:
+                        lua.L_ArgError(3, "Incompatible Type");
+                        go.SendMessage(method, null, SendMessageOptions.DontRequireReceiver); //send it anyway!
+                        break;
+                }
             }
+            else
+                go.SendMessage(method, null, SendMessageOptions.DontRequireReceiver);
+
             return 0;
         }
 
@@ -262,28 +269,35 @@ namespace M8.Lua.Library {
         /// Send message. SendMessageUpwards(go, method, var)
         /// </summary>
         private static int SendMessageUpwards(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string method = lua.L_CheckString(2);
-            switch(lua.Type(3)) {
-                case LuaType.LUA_TBOOLEAN:
-                    go.SendMessageUpwards(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TNUMBER:
-                    go.SendMessageUpwards(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TSTRING:
-                    go.SendMessageUpwards(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TUINT64:
-                    go.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TLIGHTUSERDATA:
-                    go.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                default:
-                    lua.L_ArgError(3, "Incompatible Type");
-                    break;
+
+            if(lua.GetTop() >= 3) {
+                switch(lua.Type(3)) {
+                    case LuaType.LUA_TBOOLEAN:
+                        go.SendMessageUpwards(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TNUMBER:
+                        go.SendMessageUpwards(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TSTRING:
+                        go.SendMessageUpwards(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TUINT64:
+                        go.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
+                        go.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    default:
+                        lua.L_ArgError(3, "Incompatible Type");
+                        go.SendMessageUpwards(method, null, SendMessageOptions.DontRequireReceiver); //send it anyway!
+                        break;
+                }
             }
+            else
+                go.SendMessageUpwards(method, null, SendMessageOptions.DontRequireReceiver);
+
             return 0;
         }
 
@@ -291,28 +305,35 @@ namespace M8.Lua.Library {
         /// Send message. BroadcastMessage(go, method, var)
         /// </summary>
         private static int BroadcastMessage(ILuaState lua) {
-            GameObject go = Utils.CheckObject<GameObject>(lua, 1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string method = lua.L_CheckString(2);
-            switch(lua.Type(3)) {
-                case LuaType.LUA_TBOOLEAN:
-                    go.BroadcastMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TNUMBER:
-                    go.BroadcastMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TSTRING:
-                    go.BroadcastMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TUINT64:
-                    go.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                case LuaType.LUA_TLIGHTUSERDATA:
-                    go.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
-                    break;
-                default:
-                    lua.L_ArgError(3, "Incompatible Type");
-                    break;
+
+            if(lua.GetTop() >= 3) {
+                switch(lua.Type(3)) {
+                    case LuaType.LUA_TBOOLEAN:
+                        go.BroadcastMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TNUMBER:
+                        go.BroadcastMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TSTRING:
+                        go.BroadcastMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TUINT64:
+                        go.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
+                        go.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    default:
+                        lua.L_ArgError(3, "Incompatible Type");
+                        go.BroadcastMessage(method, null, SendMessageOptions.DontRequireReceiver);
+                        break;
+                }
             }
+            else
+                go.BroadcastMessage(method, null, SendMessageOptions.DontRequireReceiver);
+
             return 0;
         }
 	}
@@ -330,23 +351,35 @@ namespace M8.Lua.Library {
         }
 
         private static int GetGameObject(ILuaState lua) {
-            Component comp = Utils.CheckObject<Component>(lua, 1);
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             lua.PushLightUserData(comp.gameObject);
             return 1;
         }
     }
 
-    public static class LMonoBehaviour {
-        public const string LIB_NAME = "Unity.MonoBehaviour";
+    public static class LBehaviour {
+        public const string LIB_NAME = "Unity.Behaviour";
 
         public static int OpenLib(ILuaState lua) {
             NameFuncPair[] funcs = new NameFuncPair[] {
+                new NameFuncPair("IsEnabled", IsEnabled),
+                new NameFuncPair("SetEnabled", SetEnabled),
             };
 
             lua.L_NewLib(funcs);
             return 1;
         }
 
-        
+        private static int IsEnabled(ILuaState lua) {
+            Behaviour b = Utils.CheckUnityObject<Behaviour>(lua, 1);
+            lua.PushBoolean(b.enabled);
+            return 1;
+        }
+
+        private static int SetEnabled(ILuaState lua) {
+            Behaviour b = Utils.CheckUnityObject<Behaviour>(lua, 1);
+            b.enabled = lua.ToBoolean(2);
+            return 0;
+        }
     }
 }
