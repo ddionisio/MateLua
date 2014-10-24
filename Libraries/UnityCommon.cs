@@ -4,7 +4,8 @@ using System.Collections;
 using UniLua;
 
 namespace M8.Lua.Library {
-	public static class UnityCommon {
+#region Common
+    public static class UnityCommon {
         public const string LIB_NAME = "Unity.Common";
 
         public static int OpenLib(ILuaState lua) {
@@ -48,7 +49,7 @@ namespace M8.Lua.Library {
 
         //Note: expect first param to be light object reference to Object
 
-#region Object
+    #region Object
         /// <summary>
         /// Returns name of given Object. string GetName(obj)
         /// </summary>
@@ -67,9 +68,9 @@ namespace M8.Lua.Library {
             o.name = lua.L_CheckString(2);
             return 0;
         }
-#endregion
+    #endregion
 
-#region GameObject
+    #region GameObject
         /// <summary>
         /// Returns if given GameObject is active. bool IsActiveSelf(go)
         /// </summary>
@@ -118,9 +119,9 @@ namespace M8.Lua.Library {
             go.layer = lua.L_CheckInteger(2);
             return 0;
         }
-#endregion
+    #endregion
 
-#region Component
+    #region Component
         /// <summary>
         /// get gameobject of component.  GameObject GetGameObject(comp)
         /// </summary>
@@ -129,9 +130,9 @@ namespace M8.Lua.Library {
             lua.PushLightUserData(comp.gameObject);
             return 1;
         }
-#endregion
+    #endregion
 
-#region Behaviour
+    #region Behaviour
         /// <summary>
         /// Check if given Behaviour is enabled. bool IsEnabled(behaviour)
         /// </summary>
@@ -149,9 +150,9 @@ namespace M8.Lua.Library {
             b.enabled = lua.ToBoolean(2);
             return 0;
         }
-#endregion
+    #endregion
 
-#region GameObject_Component
+    #region GameObject_Component
         /// <summary>
         /// Returns the tag of GameObject. string GetTag(go)
         /// </summary>
@@ -532,6 +533,236 @@ namespace M8.Lua.Library {
             }
             return 0;
         }
-#endregion
+    #endregion
     }
+#endregion
+
+#region Transform
+    public static class UnityTransform {
+        public const string LIB_NAME = "Unity.Transform";
+
+        public static int OpenLib(ILuaState lua) {
+            NameFuncPair[] funcs = new NameFuncPair[] {
+                new NameFuncPair("GetParent", GetParent),
+                new NameFuncPair("Find", Find),
+                new NameFuncPair("GetChildCount", GetChildCount),
+                new NameFuncPair("GetChild", GetChild),
+
+                new NameFuncPair("GetPosition", GetPosition),
+                new NameFuncPair("SetPosition", SetPosition),
+                new NameFuncPair("GetLocalPosition", GetLocalPosition),
+                new NameFuncPair("SetLocalPosition", SetLocalPosition),
+                new NameFuncPair("GetRotation", GetRotation),
+                new NameFuncPair("SetRotation", SetRotation),
+                new NameFuncPair("GetLocalRotation", GetLocalRotation),
+                new NameFuncPair("SetLocalRotation", SetLocalRotation),
+                new NameFuncPair("GetLocalScale", GetLocalScale),
+                new NameFuncPair("SetLocalScale", SetLocalScale),
+                new NameFuncPair("GetEulerAngles", GetEulerAngles),
+                new NameFuncPair("SetEulerAngles", SetEulerAngles),
+                new NameFuncPair("GetLocalEulerAngles", GetLocalEulerAngles),
+                new NameFuncPair("SetLocalEulerAngles", SetLocalEulerAngles),
+                new NameFuncPair("GetUp", GetUp),
+                new NameFuncPair("SetUp", SetUp),
+                new NameFuncPair("GetRight", GetRight),
+                new NameFuncPair("SetRight", SetRight),
+                new NameFuncPair("GetForward", GetForward),
+                new NameFuncPair("SetForward", SetForward),
+            };
+
+            lua.L_NewLib(funcs);
+            return 1;
+        }
+
+        private static int GetParent(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Transform parent = t.parent;
+            if(parent)
+                lua.PushLightUserData(parent);
+            else
+                lua.PushNil();
+            return 1;
+        }
+
+        private static int Find(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            string path = lua.L_CheckString(2);
+            Transform c = t.Find(path);
+            if(c)
+                lua.PushLightUserData(c);
+            else
+                lua.PushNil();
+            return 1;
+        }
+
+        private static int GetChildCount(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            lua.PushInteger(t.childCount);
+            return 1;
+        }
+
+        private static int GetChild(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            int ind = lua.L_CheckInteger(2);
+            Transform c = t.GetChild(ind);
+            if(c)
+                lua.PushLightUserData(c);
+            else
+                lua.PushNil();
+            return 1;
+        }
+
+        private static int GetPosition(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Vector3 pos = t.position;
+            lua.PushNumber(pos.x);
+            lua.PushNumber(pos.y);
+            lua.PushNumber(pos.z);
+            return 3;
+        }
+
+        private static int SetPosition(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.position = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            return 0;
+        }
+
+        private static int GetLocalPosition(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Vector3 pos = t.localPosition;
+            lua.PushNumber(pos.x);
+            lua.PushNumber(pos.y);
+            lua.PushNumber(pos.z);
+            return 3;
+        }
+
+        private static int SetLocalPosition(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.localPosition = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            return 0;
+        }
+
+        private static int GetRotation(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Quaternion q = t.rotation;
+            lua.PushNumber(q.x);
+            lua.PushNumber(q.y);
+            lua.PushNumber(q.z);
+            lua.PushNumber(q.w);
+            return 4;
+        }
+
+        private static int SetRotation(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.rotation = new Quaternion((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4), (float)lua.L_CheckNumber(5));
+            return 0;
+        }
+
+        private static int GetLocalRotation(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Quaternion q = t.localRotation;
+            lua.PushNumber(q.x);
+            lua.PushNumber(q.y);
+            lua.PushNumber(q.z);
+            lua.PushNumber(q.w);
+            return 4;
+        }
+
+        private static int SetLocalRotation(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.localRotation = new Quaternion((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4), (float)lua.L_CheckNumber(5));
+            return 0;
+        }
+
+        private static int GetLocalScale(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Vector3 s = t.localScale;
+            lua.PushNumber(s.x);
+            lua.PushNumber(s.y);
+            lua.PushNumber(s.z);
+            return 3;
+        }
+
+        private static int SetLocalScale(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.localScale = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            return 0;
+        }
+
+        private static int GetEulerAngles(ILuaState lua) { //in degrees
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Vector3 e = t.eulerAngles;
+            lua.PushNumber(e.x);
+            lua.PushNumber(e.y);
+            lua.PushNumber(e.z);
+            return 3;
+        }
+
+        private static int SetEulerAngles(ILuaState lua) { //in degrees
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.eulerAngles = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            return 0;
+        }
+
+        private static int GetLocalEulerAngles(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Vector3 e = t.localEulerAngles;
+            lua.PushNumber(e.x);
+            lua.PushNumber(e.y);
+            lua.PushNumber(e.z);
+            return 3;
+        }
+
+        private static int SetLocalEulerAngles(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.localEulerAngles = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            return 0;
+        }
+
+        private static int GetUp(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Vector3 up = t.up;
+            lua.PushNumber(up.x);
+            lua.PushNumber(up.y);
+            lua.PushNumber(up.z);
+            return 3;
+        }
+
+        private static int SetUp(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.up = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            return 0;
+        }
+
+        private static int GetRight(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Vector3 right = t.right;
+            lua.PushNumber(right.x);
+            lua.PushNumber(right.y);
+            lua.PushNumber(right.z);
+            return 3;
+        }
+
+        private static int SetRight(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.right = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            return 0;
+        }
+
+        private static int GetForward(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            Vector3 forward = t.forward;
+            lua.PushNumber(forward.x);
+            lua.PushNumber(forward.y);
+            lua.PushNumber(forward.z);
+            return 3;
+        }
+
+        private static int SetForward(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            t.forward = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            return 0;
+        }
+    }
+#endregion
 }
