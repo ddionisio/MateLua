@@ -4,52 +4,21 @@ using System.Collections;
 using UniLua;
 
 namespace M8.Lua.Library {
-#region Common
-    public static class UnityCommon {
-        public const string LIB_NAME = "Unity.Common";
+#region Object
+    public static class UnityObject {
+        public const string LIB_NAME = "Unity.Object";
 
         public static int OpenLib(ILuaState lua) {
             NameFuncPair[] funcs = new NameFuncPair[] {
                 //object
                 new NameFuncPair("GetName", GetName),
                 new NameFuncPair("SetName", SetName),
-
-                //gameobject
-                new NameFuncPair("IsActiveSelf", IsActiveSelf),
-                new NameFuncPair("IsActiveInHierarchy", IsActiveInHierarchy),
-                new NameFuncPair("SetActive", SetActive),
-                new NameFuncPair("GetLayer", GetLayer),
-                new NameFuncPair("SetLayer", SetLayer),
-                
-                //component
-                new NameFuncPair("GetGameObject", GetGameObject),
-                
-                //behaviour
-                new NameFuncPair("IsEnabled", IsEnabled),
-                new NameFuncPair("SetEnabled", SetEnabled),
-
-                //gameobject/component
-                new NameFuncPair("GetTag", GetTag),
-                new NameFuncPair("SetTag", SetTag),
-                new NameFuncPair("CompareTag", CompareTag),
-                new NameFuncPair("GetComponent", GetComponent),
-                new NameFuncPair("GetComponentInChildren", GetComponentInChildren),
-                new NameFuncPair("GetComponentInParent", GetComponentInParent),
-                new NameFuncPair("GetTransform", GetTransform),
-                new NameFuncPair("GetCollider", GetCollider),
-                new NameFuncPair("GetRigidbody", GetRigidbody),
-                new NameFuncPair("SendMessage", SendMessage),
-                new NameFuncPair("SendMessageUpwards", SendMessageUpwards),
-                new NameFuncPair("BroadcastMessage", BroadcastMessage),
             };
 
             lua.L_NewLib(funcs);
             return 1;
         }
 
-        //Note: expect first param to be light object reference to Object
-
-    #region Object
         /// <summary>
         /// Returns name of given Object. string GetName(obj)
         /// </summary>
@@ -68,9 +37,39 @@ namespace M8.Lua.Library {
             o.name = lua.L_CheckString(2);
             return 0;
         }
-    #endregion
+    }
+#endregion
 
-    #region GameObject
+#region GameObject
+    public static class UnityGameObject {
+        public const string LIB_NAME = "Unity.GameObject";
+
+        public static int OpenLib(ILuaState lua) {
+            NameFuncPair[] funcs = new NameFuncPair[] {
+                new NameFuncPair("IsActiveSelf", IsActiveSelf),
+                new NameFuncPair("IsActiveInHierarchy", IsActiveInHierarchy),
+                new NameFuncPair("SetActive", SetActive),
+                new NameFuncPair("GetLayer", GetLayer),
+                new NameFuncPair("SetLayer", SetLayer),
+
+                new NameFuncPair("GetTag", GetTag),
+                new NameFuncPair("SetTag", SetTag),
+                new NameFuncPair("CompareTag", CompareTag),
+                new NameFuncPair("GetComponent", GetComponent),
+                new NameFuncPair("GetComponentInChildren", GetComponentInChildren),
+                new NameFuncPair("GetComponentInParent", GetComponentInParent),
+                new NameFuncPair("GetTransform", GetTransform),
+                new NameFuncPair("GetCollider", GetCollider),
+                new NameFuncPair("GetRigidbody", GetRigidbody),
+                new NameFuncPair("SendMessage", SendMessage),
+                new NameFuncPair("SendMessageUpwards", SendMessageUpwards),
+                new NameFuncPair("BroadcastMessage", BroadcastMessage),
+            };
+
+            lua.L_NewLib(funcs);
+            return 1;
+        }
+
         /// <summary>
         /// Returns if given GameObject is active. bool IsActiveSelf(go)
         /// </summary>
@@ -119,57 +118,14 @@ namespace M8.Lua.Library {
             go.layer = lua.L_CheckInteger(2);
             return 0;
         }
-    #endregion
 
-    #region Component
-        /// <summary>
-        /// get gameobject of component.  GameObject GetGameObject(comp)
-        /// </summary>
-        private static int GetGameObject(ILuaState lua) {
-            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
-            lua.PushLightUserData(comp.gameObject);
-            return 1;
-        }
-    #endregion
-
-    #region Behaviour
-        /// <summary>
-        /// Check if given Behaviour is enabled. bool IsEnabled(behaviour)
-        /// </summary>
-        private static int IsEnabled(ILuaState lua) {
-            Behaviour b = Utils.CheckUnityObject<Behaviour>(lua, 1);
-            lua.PushBoolean(b.enabled);
-            return 1;
-        }
-
-        /// <summary>
-        /// Set Behaviour enabled. SetEnabled(behaviour)
-        /// </summary>
-        private static int SetEnabled(ILuaState lua) {
-            Behaviour b = Utils.CheckUnityObject<Behaviour>(lua, 1);
-            b.enabled = lua.ToBoolean(2);
-            return 0;
-        }
-    #endregion
-
-    #region GameObject_Component
         /// <summary>
         /// Returns the tag of GameObject. string GetTag(go)
         /// </summary>
         /// <returns>tag</returns>
         private static int GetTag(ILuaState lua) {
-            object o = lua.ToUserData(1);
-
-            GameObject go = o as GameObject;
-            if(go)
-                lua.PushString(go.tag);
-            else {
-                Component comp = o as Component;
-                if(comp)
-                    lua.PushString(comp.tag);
-                else
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-            }
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
+            lua.PushString(go.tag);
             return 1;
         }
 
@@ -177,18 +133,8 @@ namespace M8.Lua.Library {
         /// set given GameObject tag. SetTag(go, string)
         /// </summary>
         private static int SetTag(ILuaState lua) {
-            object o = lua.ToUserData(1);
-
-            GameObject go = o as GameObject;
-            if(go)
-                go.tag = lua.L_CheckString(2);
-            else {
-                Component comp = o as Component;
-                if(comp)
-                    comp.tag = lua.L_CheckString(2);
-                else
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-            }
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
+            go.tag = lua.L_CheckString(2);
             return 0;
         }
 
@@ -197,19 +143,9 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>bool</returns>
         private static int CompareTag(ILuaState lua) {
-            object o = lua.ToUserData(1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string tag = lua.L_CheckString(2);
-
-            GameObject go = o as GameObject;
-            if(go)
-                lua.PushBoolean(go.CompareTag(tag));
-            else {
-                Component comp = o as Component;
-                if(comp)
-                    lua.PushBoolean(comp.CompareTag(tag));
-                else
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-            }
+            lua.PushBoolean(go.CompareTag(tag));
             return 1;
         }
 
@@ -218,22 +154,10 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>component</returns>
         private static int GetComponent(ILuaState lua) {
-            object o = lua.ToUserData(1);
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string type = lua.L_CheckString(2);
 
-            Component c = null;
-
-            GameObject go = o as GameObject;
-            if(go)
-                c = go.GetComponent(type);
-            else {
-                Component comp = o as Component;
-                if(comp)
-                    c = comp.GetComponent(type);
-                else
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-            }
-
+            Component c = go.GetComponent(type);
             if(c)
                 lua.PushLightUserData(c);
             else
@@ -246,24 +170,11 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>component</returns>
         private static int GetComponentInChildren(ILuaState lua) {
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
             if(type != null) {
-                object o = lua.ToUserData(1);
-
-                Component c = null;
-
-                GameObject go = o as GameObject;
-                if(go)
-                    c = go.GetComponentInChildren(type);
-                else {
-                    Component comp = o as Component;
-                    if(comp)
-                        c = comp.GetComponentInChildren(type);
-                    else
-                        lua.L_ArgError(1, "Not a GameObject or Component");
-                }
-
+                Component c = go.GetComponentInChildren(type);
                 if(c)
                     lua.PushLightUserData(c);
                 else
@@ -279,24 +190,11 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>component</returns>
         private static int GetComponentInParent(ILuaState lua) {
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
             if(type != null) {
-                object o = lua.ToUserData(1);
-
-                Component c = null;
-
-                GameObject go = o as GameObject;
-                if(go)
-                    c = go.GetComponentInParent(type);
-                else {
-                    Component comp = o as Component;
-                    if(comp)
-                        c = comp.GetComponentInParent(type);
-                    else
-                        lua.L_ArgError(1, "Not a GameObject or Component");
-                }
-
+                Component c = go.GetComponentInParent(type);
                 if(c)
                     lua.PushLightUserData(c);
                 else
@@ -312,18 +210,8 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>transform</returns>
         private static int GetTransform(ILuaState lua) {
-            object o = lua.ToUserData(1);
-
-            GameObject go = o as GameObject;
-            if(go)
-                lua.PushLightUserData(go.transform);
-            else {
-                Component comp = o as Component;
-                if(comp)
-                    lua.PushLightUserData(comp.transform);
-                else
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-            }
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
+            lua.PushLightUserData(go.transform);
             return 1;
         }
 
@@ -332,21 +220,8 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>transform</returns>
         private static int GetCollider(ILuaState lua) {
-            object o = lua.ToUserData(1);
-
-            Collider coll = null;
-
-            GameObject go = o as GameObject;
-            if(go)
-                coll = go.collider;
-            else {
-                Component comp = o as Component;
-                if(comp)
-                    coll = comp.collider;
-                else
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-            }
-
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
+            Collider coll = go.collider;
             if(coll)
                 lua.PushLightUserData(coll);
             else
@@ -359,21 +234,8 @@ namespace M8.Lua.Library {
         /// </summary>
         /// <returns>transform</returns>
         private static int GetRigidbody(ILuaState lua) {
-            object o = lua.ToUserData(1);
-
-            Rigidbody body = null;
-
-            GameObject go = o as GameObject;
-            if(go)
-                body = go.rigidbody;
-            else {
-                Component comp = o as Component;
-                if(comp)
-                    body = comp.rigidbody;
-                else
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-            }
-
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
+            Rigidbody body = go.rigidbody;
             if(body)
                 lua.PushLightUserData(body);
             else
@@ -385,50 +247,33 @@ namespace M8.Lua.Library {
         /// Send message. SendMessage(go, method, var)
         /// </summary>
         private static int SendMessage(ILuaState lua) {
-            object o = lua.ToUserData(1);
-            GameObject go = o as GameObject;
-            Component comp = null;
-            if(!go) {
-                comp = o as Component;
-                if(!comp) {
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-                    return 0;
-                }
-            }
-
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string method = lua.L_CheckString(2);
 
             if(lua.GetTop() >= 3) {
                 switch(lua.Type(3)) {
                     case LuaType.LUA_TBOOLEAN:
-                        if(go) go.SendMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TNUMBER:
-                        if(go) go.SendMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TSTRING:
-                        if(go) go.SendMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUINT64:
-                        if(go) go.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TLIGHTUSERDATA:
-                        if(go) go.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
                         lua.L_ArgError(3, "Incompatible Type");
                         break;
                 }
             }
-            else {
-                if(go) go.SendMessage(method, null, SendMessageOptions.DontRequireReceiver);
-                else comp.SendMessage(method, null, SendMessageOptions.DontRequireReceiver);
-            }
+            else
+                go.SendMessage(method, null, SendMessageOptions.DontRequireReceiver);
             return 0;
         }
 
@@ -436,50 +281,33 @@ namespace M8.Lua.Library {
         /// Send message. SendMessageUpwards(go, method, var)
         /// </summary>
         private static int SendMessageUpwards(ILuaState lua) {
-            object o = lua.ToUserData(1);
-            GameObject go = o as GameObject;
-            Component comp = null;
-            if(!go) {
-                comp = o as Component;
-                if(!comp) {
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-                    return 0;
-                }
-            }
-
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string method = lua.L_CheckString(2);
 
             if(lua.GetTop() >= 3) {
                 switch(lua.Type(3)) {
                     case LuaType.LUA_TBOOLEAN:
-                        if(go) go.SendMessageUpwards(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessageUpwards(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessageUpwards(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TNUMBER:
-                        if(go) go.SendMessageUpwards(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessageUpwards(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessageUpwards(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TSTRING:
-                        if(go) go.SendMessageUpwards(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessageUpwards(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessageUpwards(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUINT64:
-                        if(go) go.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TLIGHTUSERDATA:
-                        if(go) go.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        go.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
                         lua.L_ArgError(3, "Incompatible Type");
                         break;
                 }
             }
-            else {
-                if(go) go.SendMessageUpwards(method, null, SendMessageOptions.DontRequireReceiver);
-                else comp.SendMessageUpwards(method, null, SendMessageOptions.DontRequireReceiver);
-            }
+            else
+                go.SendMessageUpwards(method, null, SendMessageOptions.DontRequireReceiver);
             return 0;
         }
 
@@ -487,107 +315,94 @@ namespace M8.Lua.Library {
         /// Send message. BroadcastMessage(go, method, var)
         /// </summary>
         private static int BroadcastMessage(ILuaState lua) {
-            object o = lua.ToUserData(1);
-            GameObject go = o as GameObject;
-            Component comp = null;
-            if(!go) {
-                comp = o as Component;
-                if(!comp) {
-                    lua.L_ArgError(1, "Not a GameObject or Component");
-                    return 0;
-                }
-            }
-
+            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string method = lua.L_CheckString(2);
 
             if(lua.GetTop() >= 3) {
                 switch(lua.Type(3)) {
                     case LuaType.LUA_TBOOLEAN:
-                        if(go) go.BroadcastMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.BroadcastMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        go.BroadcastMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TNUMBER:
-                        if(go) go.BroadcastMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
-                        else comp.BroadcastMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        go.BroadcastMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TSTRING:
-                        if(go) go.BroadcastMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.BroadcastMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        go.BroadcastMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUINT64:
-                        if(go) go.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        go.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TLIGHTUSERDATA:
-                        if(go) go.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
-                        else comp.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        go.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
                         lua.L_ArgError(3, "Incompatible Type");
                         break;
                 }
             }
-            else {
-                if(go) go.BroadcastMessage(method, null, SendMessageOptions.DontRequireReceiver);
-                else comp.BroadcastMessage(method, null, SendMessageOptions.DontRequireReceiver);
-            }
+            else
+                go.BroadcastMessage(method, null, SendMessageOptions.DontRequireReceiver);
             return 0;
         }
-    #endregion
     }
 #endregion
 
-#region Transform
-    public static class UnityTransform {
-        public const string LIB_NAME = "Unity.Transform";
+#region Component
+    public static class UnityComponent {
+        public const string LIB_NAME = "Unity.Component";
 
         public static int OpenLib(ILuaState lua) {
             NameFuncPair[] funcs = new NameFuncPair[] {
-                new NameFuncPair("GetParent", GetParent),
-                new NameFuncPair("Find", Find),
-                new NameFuncPair("GetChildCount", GetChildCount),
-                new NameFuncPair("GetChild", GetChild),
+                new NameFuncPair("GetGameObject", GetGameObject),
 
-                new NameFuncPair("GetPosition", GetPosition),
-                new NameFuncPair("SetPosition", SetPosition),
-                new NameFuncPair("GetLocalPosition", GetLocalPosition),
-                new NameFuncPair("SetLocalPosition", SetLocalPosition),
-                new NameFuncPair("GetRotation", GetRotation),
-                new NameFuncPair("SetRotation", SetRotation),
-                new NameFuncPair("GetLocalRotation", GetLocalRotation),
-                new NameFuncPair("SetLocalRotation", SetLocalRotation),
-                new NameFuncPair("GetLocalScale", GetLocalScale),
-                new NameFuncPair("SetLocalScale", SetLocalScale),
-                new NameFuncPair("GetEulerAngles", GetEulerAngles),
-                new NameFuncPair("SetEulerAngles", SetEulerAngles),
-                new NameFuncPair("GetLocalEulerAngles", GetLocalEulerAngles),
-                new NameFuncPair("SetLocalEulerAngles", SetLocalEulerAngles),
-                new NameFuncPair("GetUp", GetUp),
-                new NameFuncPair("SetUp", SetUp),
-                new NameFuncPair("GetRight", GetRight),
-                new NameFuncPair("SetRight", SetRight),
-                new NameFuncPair("GetForward", GetForward),
-                new NameFuncPair("SetForward", SetForward),
+                new NameFuncPair("GetTag", GetTag),
+                new NameFuncPair("SetTag", SetTag),
+                new NameFuncPair("CompareTag", CompareTag),
+                new NameFuncPair("GetComponent", GetComponent),
+                new NameFuncPair("GetComponentInChildren", GetComponentInChildren),
+                new NameFuncPair("GetComponentInParent", GetComponentInParent),
+                new NameFuncPair("GetTransform", GetTransform),
+                new NameFuncPair("GetCollider", GetCollider),
+                new NameFuncPair("GetRigidbody", GetRigidbody),
+                new NameFuncPair("SendMessage", SendMessage),
+                new NameFuncPair("SendMessageUpwards", SendMessageUpwards),
+                new NameFuncPair("BroadcastMessage", BroadcastMessage),
             };
 
             lua.L_NewLib(funcs);
             return 1;
         }
 
-        private static int GetParent(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Transform parent = t.parent;
-            if(parent)
-                lua.PushLightUserData(parent);
-            else
-                lua.PushNil();
+        private static int GetGameObject(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            lua.PushLightUserData(comp.gameObject);
             return 1;
         }
 
-        private static int Find(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            string path = lua.L_CheckString(2);
-            Transform c = t.Find(path);
+        private static int GetTag(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            lua.PushString(comp.tag);
+            return 1;
+        }
+
+        private static int SetTag(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            comp.tag = lua.L_CheckString(2);
+            return 0;
+        }
+
+        private static int CompareTag(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            string tag = lua.L_CheckString(2);
+            lua.PushBoolean(comp.CompareTag(tag));
+            return 1;
+        }
+
+        private static int GetComponent(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            string type = lua.L_CheckString(2);
+
+            Component c = comp.GetComponent(type);
             if(c)
                 lua.PushLightUserData(c);
             else
@@ -595,172 +410,191 @@ namespace M8.Lua.Library {
             return 1;
         }
 
-        private static int GetChildCount(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            lua.PushInteger(t.childCount);
+        private static int GetComponentInChildren(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            string typeString = lua.L_CheckString(2);
+            System.Type type = System.Type.GetType(typeString);
+            if(type != null) {
+                Component c = comp.GetComponentInChildren(type);
+                if(c)
+                    lua.PushLightUserData(c);
+                else
+                    lua.PushNil();
+            }
+            else
+                lua.L_ArgError(2, "Type not exists: "+typeString);
             return 1;
         }
 
-        private static int GetChild(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            int ind = lua.L_CheckInteger(2);
-            Transform c = t.GetChild(ind);
-            if(c)
-                lua.PushLightUserData(c);
+        private static int GetComponentInParent(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            string typeString = lua.L_CheckString(2);
+            System.Type type = System.Type.GetType(typeString);
+            if(type != null) {
+                Component c = comp.GetComponentInParent(type);
+                if(c)
+                    lua.PushLightUserData(c);
+                else
+                    lua.PushNil();
+            }
+            else
+                lua.L_ArgError(2, "Type not exists: "+typeString);
+            return 1;
+        }
+
+        private static int GetTransform(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            lua.PushLightUserData(comp.transform);
+            return 1;
+        }
+
+        private static int GetCollider(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            Collider coll = comp.collider;
+            if(coll)
+                lua.PushLightUserData(coll);
             else
                 lua.PushNil();
             return 1;
         }
 
-        private static int GetPosition(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Vector3 pos = t.position;
-            lua.PushNumber(pos.x);
-            lua.PushNumber(pos.y);
-            lua.PushNumber(pos.z);
-            return 3;
+        private static int GetRigidbody(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            Rigidbody body = comp.rigidbody;
+            if(body)
+                lua.PushLightUserData(body);
+            else
+                lua.PushNil();
+            return 1;
         }
 
-        private static int SetPosition(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.position = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+        private static int SendMessage(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            string method = lua.L_CheckString(2);
+
+            if(lua.GetTop() >= 3) {
+                switch(lua.Type(3)) {
+                    case LuaType.LUA_TBOOLEAN:
+                        comp.SendMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TNUMBER:
+                        comp.SendMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TSTRING:
+                        comp.SendMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TUINT64:
+                        comp.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
+                        comp.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    default:
+                        lua.L_ArgError(3, "Incompatible Type");
+                        break;
+                }
+            }
+            else
+                comp.SendMessage(method, null, SendMessageOptions.DontRequireReceiver);
             return 0;
         }
 
-        private static int GetLocalPosition(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Vector3 pos = t.localPosition;
-            lua.PushNumber(pos.x);
-            lua.PushNumber(pos.y);
-            lua.PushNumber(pos.z);
-            return 3;
-        }
+        private static int SendMessageUpwards(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            string method = lua.L_CheckString(2);
 
-        private static int SetLocalPosition(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.localPosition = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+            if(lua.GetTop() >= 3) {
+                switch(lua.Type(3)) {
+                    case LuaType.LUA_TBOOLEAN:
+                        comp.SendMessageUpwards(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TNUMBER:
+                        comp.SendMessageUpwards(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TSTRING:
+                        comp.SendMessageUpwards(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TUINT64:
+                        comp.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
+                        comp.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    default:
+                        lua.L_ArgError(3, "Incompatible Type");
+                        break;
+                }
+            }
+            else
+                comp.SendMessageUpwards(method, null, SendMessageOptions.DontRequireReceiver);
             return 0;
         }
 
-        private static int GetRotation(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Quaternion q = t.rotation;
-            lua.PushNumber(q.x);
-            lua.PushNumber(q.y);
-            lua.PushNumber(q.z);
-            lua.PushNumber(q.w);
-            return 4;
-        }
+        /// <summary>
+        /// Send message. BroadcastMessage(go, method, var)
+        /// </summary>
+        private static int BroadcastMessage(ILuaState lua) {
+            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
+            string method = lua.L_CheckString(2);
 
-        private static int SetRotation(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.rotation = new Quaternion((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4), (float)lua.L_CheckNumber(5));
+            if(lua.GetTop() >= 3) {
+                switch(lua.Type(3)) {
+                    case LuaType.LUA_TBOOLEAN:
+                        comp.BroadcastMessage(method, lua.ToBoolean(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TNUMBER:
+                        comp.BroadcastMessage(method, ((float)lua.ToNumber(3)), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TSTRING:
+                        comp.BroadcastMessage(method, lua.ToString(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TUINT64:
+                        comp.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
+                        comp.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
+                        break;
+                    default:
+                        lua.L_ArgError(3, "Incompatible Type");
+                        break;
+                }
+            }
+            else
+                comp.BroadcastMessage(method, null, SendMessageOptions.DontRequireReceiver);
             return 0;
         }
+    }
+#endregion
 
-        private static int GetLocalRotation(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Quaternion q = t.localRotation;
-            lua.PushNumber(q.x);
-            lua.PushNumber(q.y);
-            lua.PushNumber(q.z);
-            lua.PushNumber(q.w);
-            return 4;
+#region Behaviour
+    public static class UnityBehaviour {
+        public const string LIB_NAME = "Unity.Behaviour";
+
+        public static int OpenLib(ILuaState lua) {
+            NameFuncPair[] funcs = new NameFuncPair[] {
+                new NameFuncPair("IsEnabled", IsEnabled),
+                new NameFuncPair("SetEnabled", SetEnabled),
+            };
+
+            lua.L_NewLib(funcs);
+            return 1;
         }
 
-        private static int SetLocalRotation(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.localRotation = new Quaternion((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4), (float)lua.L_CheckNumber(5));
-            return 0;
+        /// <summary>
+        /// Check if given Behaviour is enabled. bool IsEnabled(behaviour)
+        /// </summary>
+        private static int IsEnabled(ILuaState lua) {
+            Behaviour b = Utils.CheckUnityObject<Behaviour>(lua, 1);
+            lua.PushBoolean(b.enabled);
+            return 1;
         }
 
-        private static int GetLocalScale(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Vector3 s = t.localScale;
-            lua.PushNumber(s.x);
-            lua.PushNumber(s.y);
-            lua.PushNumber(s.z);
-            return 3;
-        }
-
-        private static int SetLocalScale(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.localScale = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
-            return 0;
-        }
-
-        private static int GetEulerAngles(ILuaState lua) { //in degrees
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Vector3 e = t.eulerAngles;
-            lua.PushNumber(e.x);
-            lua.PushNumber(e.y);
-            lua.PushNumber(e.z);
-            return 3;
-        }
-
-        private static int SetEulerAngles(ILuaState lua) { //in degrees
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.eulerAngles = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
-            return 0;
-        }
-
-        private static int GetLocalEulerAngles(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Vector3 e = t.localEulerAngles;
-            lua.PushNumber(e.x);
-            lua.PushNumber(e.y);
-            lua.PushNumber(e.z);
-            return 3;
-        }
-
-        private static int SetLocalEulerAngles(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.localEulerAngles = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
-            return 0;
-        }
-
-        private static int GetUp(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Vector3 up = t.up;
-            lua.PushNumber(up.x);
-            lua.PushNumber(up.y);
-            lua.PushNumber(up.z);
-            return 3;
-        }
-
-        private static int SetUp(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.up = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
-            return 0;
-        }
-
-        private static int GetRight(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Vector3 right = t.right;
-            lua.PushNumber(right.x);
-            lua.PushNumber(right.y);
-            lua.PushNumber(right.z);
-            return 3;
-        }
-
-        private static int SetRight(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.right = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
-            return 0;
-        }
-
-        private static int GetForward(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Vector3 forward = t.forward;
-            lua.PushNumber(forward.x);
-            lua.PushNumber(forward.y);
-            lua.PushNumber(forward.z);
-            return 3;
-        }
-
-        private static int SetForward(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            t.forward = new Vector3((float)lua.L_CheckNumber(2), (float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4));
+        /// <summary>
+        /// Set Behaviour enabled. SetEnabled(behaviour)
+        /// </summary>
+        private static int SetEnabled(ILuaState lua) {
+            Behaviour b = Utils.CheckUnityObject<Behaviour>(lua, 1);
+            b.enabled = lua.ToBoolean(2);
             return 0;
         }
     }
