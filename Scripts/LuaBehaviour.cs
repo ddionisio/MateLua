@@ -77,7 +77,7 @@ namespace M8.Lua {
             mLua.L_OpenLibs();
                         
             //common unity libs
-            mLua.L_RequireF(Library.LGameObject.LIB_NAME, Library.LGameObject.OpenLib, false);
+            mLua.L_RequireF(Library.UnityCommon.LIB_NAME, Library.UnityCommon.OpenLib, false);
 
             ThreadStatus status = string.IsNullOrEmpty(scriptPath) ? mLua.L_DoString(scriptText.text) : mLua.L_DoFile(scriptPath);
             if(status != ThreadStatus.LUA_OK) {
