@@ -85,12 +85,6 @@ namespace UniLua
 					mt = ud.MetaTable;
 					break;
 				}
-                case (int)LuaType.LUA_TLIGHTUSERDATA: 
-                {
-                    System.Type t = o.OValue.GetType();
-                    G.LightUserMetaTables.TryGetValue(t, out mt);
-                    break;
-                }
 				default:
 				{
 					mt = G.MetaTables[o.Tt];

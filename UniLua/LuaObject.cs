@@ -165,8 +165,17 @@ namespace UniLua
 			Tt = (int)LuaType.LUA_TLIGHTUSERDATA;
 			NValue = 0.0;
 			UInt64Value = 0;
-			OValue = v;
+            OValue = v;
 		}
+        internal void SetUdValue(object v) {
+#if DEBUG_DUMMY_TVALUE_MODIFY
+			CheckLock();
+#endif
+            Tt = (int)LuaType.LUA_TUSERDATA;
+            NValue = 0.0;
+            UInt64Value = 0;
+            OValue = new LuaUserDataValue() { Value=v };
+        }
 		internal void SetClLValue(LuaLClosureValue v) {
 #if DEBUG_DUMMY_TVALUE_MODIFY
 			CheckLock();
@@ -250,12 +259,11 @@ namespace UniLua
 				{ Upvals[i] = new LuaUpvalue(); }
 		}
 	}
-	
-	public class LuaUserDataValue
+
+    public class LuaUserDataValue
 	{
-		public object Value;
+        public object Value;
 		public LuaTable MetaTable;
-		public int Length;
 	}
 
 	public class LocVar

@@ -67,10 +67,26 @@ namespace M8.Lua.Library {
                 };
             if(l_funcs == null)
                 l_funcs = new NameFuncPair[] {
+                    new NameFuncPair("Cast", Cast),
                 };
 
             Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
 
+            return 1;
+        }
+
+        public static void Push(ILuaState lua, Transform c) {
+            if(c) {
+                lua.NewUserData(c);
+                lua.SetMetaTable(META_NAME);
+            }
+            else //null given,
+                lua.PushNil();
+        }
+
+        private static int Cast(ILuaState lua) {
+            lua.NewUserData(Utils.CheckUnityObject<Transform>(lua, 1));
+            lua.SetMetaTable(META_NAME);
             return 1;
         }
 
@@ -82,7 +98,7 @@ namespace M8.Lua.Library {
                     case "parent":
                         Transform parent = t.parent;
                         if(parent) {
-                            lua.PushLightUserData(parent);
+                            lua.NewUserData(parent);
                             lua.SetMetaTable(META_NAME);
                         }
                         else
@@ -125,24 +141,12 @@ namespace M8.Lua.Library {
             return 1;
         }*/
 
-        private static int GetParent(ILuaState lua) {
-            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
-            Transform parent = t.parent;
-            if(parent)
-                lua.PushLightUserData(parent);
-            else
-                lua.PushNil();
-            return 1;
-        }
-
         private static int Find(ILuaState lua) {
             Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
             string path = lua.L_CheckString(2);
             Transform c = t.Find(path);
-            if(c)
-                lua.PushLightUserData(c);
-            else
-                lua.PushNil();
+            if(c) { lua.NewUserData(c); lua.SetMetaTable(META_NAME); }
+            else lua.PushNil();
             return 1;
         }
 
@@ -156,10 +160,8 @@ namespace M8.Lua.Library {
             Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
             int ind = lua.L_CheckInteger(2);
             Transform c = t.GetChild(ind);
-            if(c)
-                lua.PushLightUserData(c);
-            else
-                lua.PushNil();
+            if(c) { lua.NewUserData(c); lua.SetMetaTable(META_NAME); }
+            else lua.PushNil();
             return 1;
         }
 
@@ -351,7 +353,7 @@ namespace M8.Lua.Library {
 
             int nOtherArgs = lua.GetTop() - 1;
 
-            if(lua.Type(2) == LuaType.LUA_TLIGHTUSERDATA) {
+            if(lua.Type(2) == LuaType.LUA_TUSERDATA) {
                 Transform lookAtT = Utils.CheckUnityObject<Transform>(lua, 2);
                 if(nOtherArgs - 1 >= 3) {
                     Vector3 worldUp = new Vector3((float)lua.L_CheckNumber(3), (float)lua.L_CheckNumber(4), (float)lua.L_CheckNumber(5));

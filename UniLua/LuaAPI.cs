@@ -121,6 +121,7 @@ namespace UniLua
         int NewMetaTable(string name);
         void GetMetaTable(string name);
         void SetMetaTable(string name);
+        void NewUserData(object ptr); //C# edition, we don't really allocate internally in lua, usu. set size=1 or size=array.Length
 	}
 
 	public interface ILuaState : ILuaAPI, ILuaAuxLib
@@ -1173,7 +1174,7 @@ namespace UniLua
 				}
 				case (int)LuaType.LUA_TUSERDATA:
 				{
-					return addr.V.RawUValue().Length;
+					return 1;
 				}
 				case (int)LuaType.LUA_TTABLE:
 				{
@@ -1327,11 +1328,6 @@ namespace UniLua
 					mt = ud.MetaTable;
 					break;
 				}
-                case (int)LuaType.LUA_TLIGHTUSERDATA: {
-                    System.Type t = addr.V.OValue.GetType();
-                    G.LightUserMetaTables.TryGetValue(t, out mt);
-                    break;
-                }
 				default:
 				{
 					mt = G.MetaTables[addr.V.Tt];
@@ -1380,12 +1376,6 @@ namespace UniLua
 					ud.MetaTable = mt;
 					break;
 				}
-                case (int)LuaType.LUA_TLIGHTUSERDATA: 
-                {
-                    System.Type t = addr.V.OValue.GetType();
-                    G.LightUserMetaTables.Add(t, mt);
-                    break;
-                }
 				default:
 				{
 					G.MetaTables[addr.V.Tt] = mt;
@@ -1575,9 +1565,8 @@ namespace UniLua
 				return null;
 
 			switch(addr.V.Tt) {
-				case (int)LuaType.LUA_TUSERDATA:
-					throw new System.NotImplementedException();
-				case (int)LuaType.LUA_TLIGHTUSERDATA: { return addr.V.OValue; }
+                case (int)LuaType.LUA_TUSERDATA: { return ((LuaUserDataValue)addr.V.OValue).Value; }
+                case (int)LuaType.LUA_TLIGHTUSERDATA: { return addr.V.OValue; }
 				case (int)LuaType.LUA_TUINT64: { return addr.V.UInt64Value; }
 				default: return null;
 			}
@@ -1667,6 +1656,11 @@ namespace UniLua
         void ILuaAPI.SetMetaTable(string name) {
             API.GetMetaTable(name);
             API.SetMetaTable(-2);
+        }
+
+        void ILuaAPI.NewUserData(object ptr) {
+            Top.V.SetUdValue(ptr);
+            ApiIncrTop();
         }
 	}
 

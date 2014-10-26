@@ -4,33 +4,6 @@ using System.Collections;
 using UniLua;
 
 namespace M8.Lua.Library {
-    public static class UnityCommon {
-        public static void PushGameObject(ILuaState lua, GameObject go) {
-            if(go) {
-                lua.PushLightUserData(go);
-                lua.SetMetaTable(UnityGameObject.META_NAME);
-            }
-            else
-                lua.PushNil();
-        }
-
-        public static void PushComponent(ILuaState lua, Component c) {
-            if(c) {
-                lua.PushLightUserData(c);
-
-                //determine meta table
-                if(c is Transform)
-                    lua.SetMetaTable(UnityTransform.META_NAME);
-                else if(c is Behaviour) //default to Behaviour
-                    lua.SetMetaTable(UnityBehaviour.META_NAME);
-                else //default to Component
-                    lua.SetMetaTable(UnityComponent.META_NAME);
-            }
-            else //null given,
-                lua.PushNil();
-        }
-    }
-
 #region Object
     public static class UnityObject {
         public const string META_NAME = "Unity.Object.Meta";
@@ -56,9 +29,28 @@ namespace M8.Lua.Library {
             return 1;
         }
 
+        public static bool PushField(ILuaState lua, Object obj, string field) {
+            switch(field) {
+                case "name":
+                    lua.PushString(obj.name);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool SetField(ILuaState lua, Object obj, string field) {
+            switch(field) {
+                case "name":
+                    obj.name = lua.L_CheckString(3);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         private static int Cast(ILuaState lua) {
-            Object o = Utils.CheckUnityObject<Object>(lua, 1);
-            lua.PushLightUserData(o);
+            lua.NewUserData(Utils.CheckUnityObject<Object>(lua, 1));
             lua.SetMetaTable(META_NAME);
             return 1;
         }
@@ -66,43 +58,25 @@ namespace M8.Lua.Library {
         private static int Instantiate(ILuaState lua) {
             Object o = Utils.CheckUnityObject<Object>(lua, 1);
             Object newObj = Object.Instantiate(o);
-            if(newObj is GameObject) {
-                //return with meta
-                lua.PushLightUserData(newObj);
-            }
-            else {
-                lua.PushLightUserData(newObj);
-                lua.SetMetaTable(META_NAME);
-            }
+            lua.NewUserData(newObj);
+            lua.SetMetaTable(META_NAME);
             return 1;
         }
 
         private static int Get(ILuaState lua) {
             Object o = Utils.CheckUnityObject<Object>(lua, 1);
             string field = lua.L_CheckString(2);
-            switch(field) {
-                case "name":
-                    lua.PushString(o.name);
-                    break;
-                default:
-                    if(!lua.L_GetMetaField(1, field))
-                        lua.L_Error("Unknown field: {0}", field);
-                    break;
-            }
+            if(!PushField(lua, o, field))
+                if(!lua.L_GetMetaField(1, field))
+                    lua.L_Error("Unknown field: {0}", field);
             return 1;
         }
 
         private static int Set(ILuaState lua) {
             Object o = Utils.CheckUnityObject<Object>(lua, 1);
             string field = lua.L_CheckString(2);
-            switch(field) {
-                case "name":
-                    o.name = lua.L_CheckString(3);
-                    break;
-                default:
-                    lua.L_Error("Unknown field: {0}", field);
-                    break;
-            }
+            if(!SetField(lua, o, field))
+                lua.L_Error("Unknown field: {0}", field);
             return 0;
         }
     }
@@ -144,14 +118,20 @@ namespace M8.Lua.Library {
             return 1;
         }
 
+        public static void Push(ILuaState lua, GameObject go) {
+            if(go) {
+                lua.NewUserData(go);
+                lua.SetMetaTable(META_NAME);
+            }
+            else
+                lua.PushNil();
+        }
+
         private static int Get(ILuaState lua) {
             GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string field = lua.L_CheckString(2);
             
             switch(field) {
-                case "name":
-                    lua.PushString(go.name);
-                    break;
                 case "activeSelf":
                     lua.PushBoolean(go.activeSelf);
                     break;
@@ -165,17 +145,18 @@ namespace M8.Lua.Library {
                     lua.PushString(go.tag);
                     break;
                 case "transform":
-                    UnityCommon.PushComponent(lua, go.transform);
+                    UnityTransform.Push(lua, go.transform);
                     break;
                 case "collider":
-                    UnityCommon.PushComponent(lua, go.collider);
+                    UnityCollider.Push(lua, go.collider);
                     break;
                 case "rigidbody":
-                    UnityCommon.PushComponent(lua, go.rigidbody);
+                    //UnityCommon.PushComponent(lua, go.rigidbody);
                     break;
                 default:
-                    if(!lua.L_GetMetaField(1, field))
-                        lua.L_Error("Unknown field: {0}", field);
+                    if(!UnityObject.PushField(lua, go, field))
+                        if(!lua.L_GetMetaField(1, field))
+                            lua.L_Error("Unknown field: {0}", field);
                     break;
             }
 
@@ -187,9 +168,6 @@ namespace M8.Lua.Library {
             string field = lua.L_CheckString(2);
 
             switch(field) {
-                case "name":
-                    go.name = lua.L_CheckString(3);
-                    break;
                 case "layer":
                     go.layer = lua.L_CheckInteger(3);
                     break;
@@ -197,7 +175,8 @@ namespace M8.Lua.Library {
                     go.tag = lua.L_CheckString(3);
                     break;
                 default:
-                    lua.L_Error("Unknown field: {0}", field);
+                    if(!UnityObject.SetField(lua, go, field))
+                        lua.L_Error("Unknown field: {0}", field);
                     break;
             }
                 
@@ -208,25 +187,21 @@ namespace M8.Lua.Library {
             string name = lua.L_CheckString(1);
 
             //components?
-
-            GameObject go = new GameObject(name);
-            UnityCommon.PushGameObject(lua, go);
+            Push(lua, new GameObject(name));
             return 1;
         }
 
         private static int Find(ILuaState lua) {
             string name = lua.L_CheckString(1);
 
-            GameObject go = GameObject.Find(name);
-            UnityCommon.PushGameObject(lua, go);
+            Push(lua, GameObject.Find(name));
             return 1;
         }
 
         private static int FindGameObjectWithTag(ILuaState lua) {
             string tag = lua.L_CheckString(1);
 
-            GameObject go = GameObject.FindGameObjectWithTag(tag);
-            UnityCommon.PushGameObject(lua, go);
+            Push(lua, GameObject.FindGameObjectWithTag(tag));
             return 1;
         }
 
@@ -259,8 +234,7 @@ namespace M8.Lua.Library {
             GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string type = lua.L_CheckString(2);
 
-            Component c = go.GetComponent(type);
-            UnityCommon.PushComponent(lua, c);
+            UnityComponent.Push(lua, go.GetComponent(type)); //remember to call cast!
             return 1;
         }
 
@@ -272,10 +246,8 @@ namespace M8.Lua.Library {
             GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
-            if(type != null) {
-                Component c = go.GetComponentInChildren(type);
-                UnityCommon.PushComponent(lua, c);
-            }
+            if(type != null)
+                UnityComponent.Push(lua, go.GetComponentInChildren(type));
             else
                 lua.L_ArgError(2, "Type not exists: "+typeString);
             return 1;
@@ -289,10 +261,8 @@ namespace M8.Lua.Library {
             GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
-            if(type != null) {
-                Component c = go.GetComponentInParent(type);
-                UnityCommon.PushComponent(lua, c);
-            }
+            if(type != null)
+                UnityComponent.Push(lua, go.GetComponentInParent(type));
             else
                 lua.L_ArgError(2, "Type not exists: "+typeString);
             return 1;
@@ -319,7 +289,7 @@ namespace M8.Lua.Library {
                     case LuaType.LUA_TUINT64:
                         go.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
-                    case LuaType.LUA_TLIGHTUSERDATA:
+                    case LuaType.LUA_TUSERDATA:
                         go.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -353,7 +323,7 @@ namespace M8.Lua.Library {
                     case LuaType.LUA_TUINT64:
                         go.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
-                    case LuaType.LUA_TLIGHTUSERDATA:
+                    case LuaType.LUA_TUSERDATA:
                         go.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -387,7 +357,7 @@ namespace M8.Lua.Library {
                     case LuaType.LUA_TUINT64:
                         go.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
-                    case LuaType.LUA_TLIGHTUSERDATA:
+                    case LuaType.LUA_TUSERDATA:
                         go.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -434,41 +404,44 @@ namespace M8.Lua.Library {
             return 1;
         }
 
+        public static void Push(ILuaState lua, Component c) {
+            if(c) {
+                lua.NewUserData(c);
+                lua.SetMetaTable(META_NAME);
+            }
+            else //null given,
+                lua.PushNil();
+        }
+
         public static bool PushField(ILuaState lua, Component comp, string field) {
             switch(field) {
-                case "name":
-                    lua.PushString(comp.name);
-                    return true;
                 case "tag":
                     lua.PushString(comp.tag);
                     return true;
                 case "gameObject":
-                    UnityCommon.PushGameObject(lua, comp.gameObject);
+                    UnityGameObject.Push(lua, comp.gameObject);
                     return true;
                 case "transform":
-                    UnityCommon.PushComponent(lua, comp.transform);
+                    UnityTransform.Push(lua, comp.transform);
                     return true;
                 case "collider":
-                    UnityCommon.PushComponent(lua, comp.collider);
+                    UnityCollider.Push(lua, comp.collider);
                     return true;
                 case "rigidbody":
-                    UnityCommon.PushComponent(lua, comp.rigidbody);
+                    //UnityCommon.PushComponent(lua, comp.rigidbody);
                     return true;
                 default:
-                    return false;
+                    return UnityObject.PushField(lua, comp, field);
             }
         }
                 
         public static bool SetField(ILuaState lua, Component comp, string field) {
             switch(field) {
-                case "name":
-                    comp.name = lua.L_CheckString(3);
-                    return true;
                 case "tag":
                     comp.tag = lua.L_CheckString(3);
                     return true;
                 default:
-                    return false;
+                    return UnityObject.SetField(lua, comp, field);
             }
         }
 
@@ -500,8 +473,7 @@ namespace M8.Lua.Library {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string type = lua.L_CheckString(2);
 
-            Component c = comp.GetComponent(type);
-            UnityCommon.PushComponent(lua, c);
+            UnityComponent.Push(lua, comp.GetComponent(type));
             return 1;
         }
 
@@ -509,10 +481,8 @@ namespace M8.Lua.Library {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
-            if(type != null) {
-                Component c = comp.GetComponentInChildren(type);
-                UnityCommon.PushComponent(lua, c);
-            }
+            if(type != null)
+                UnityComponent.Push(lua, comp.GetComponentInChildren(type));
             else
                 lua.L_ArgError(2, "Type not exists: "+typeString);
             return 1;
@@ -522,10 +492,8 @@ namespace M8.Lua.Library {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
-            if(type != null) {
-                Component c = comp.GetComponentInParent(type);
-                UnityCommon.PushComponent(lua, c);
-            }
+            if(type != null)
+                UnityComponent.Push(lua, comp.GetComponentInParent(type));
             else
                 lua.L_ArgError(2, "Type not exists: "+typeString);
             return 1;
@@ -549,7 +517,7 @@ namespace M8.Lua.Library {
                     case LuaType.LUA_TUINT64:
                         comp.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
-                    case LuaType.LUA_TLIGHTUSERDATA:
+                    case LuaType.LUA_TUSERDATA:
                         comp.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -580,7 +548,7 @@ namespace M8.Lua.Library {
                     case LuaType.LUA_TUINT64:
                         comp.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
-                    case LuaType.LUA_TLIGHTUSERDATA:
+                    case LuaType.LUA_TUSERDATA:
                         comp.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -614,7 +582,7 @@ namespace M8.Lua.Library {
                     case LuaType.LUA_TUINT64:
                         comp.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
-                    case LuaType.LUA_TLIGHTUSERDATA:
+                    case LuaType.LUA_TUSERDATA:
                         comp.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:

@@ -88,11 +88,11 @@ namespace M8.Lua {
             Debug.Log(mLua.GetTop());
 
             //add some variables
-            mLua.PushLightUserData(gameObject);
+            mLua.NewUserData(gameObject);
             mLua.SetMetaTable(Library.UnityGameObject.META_NAME);
             mLua.SetGlobal("gameObject");
 
-            mLua.PushLightUserData(transform);
+            mLua.NewUserData(transform);
             mLua.SetMetaTable(Library.UnityTransform.META_NAME);
             mLua.SetGlobal("transform");
 
