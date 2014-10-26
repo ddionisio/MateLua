@@ -118,6 +118,7 @@ namespace UniLua
 		public StkId		Registry;
 		public LuaUpvalue 	UpvalHead;
 		public LuaTable[] 	MetaTables;
+        public Dictionary<System.Type, LuaTable> LightUserMetaTables;
 		public LuaState		MainThread;
 
 		public GlobalState( LuaState state )
@@ -126,6 +127,7 @@ namespace UniLua
 			Registry 	= new StkId();
 			UpvalHead 	= new LuaUpvalue();
 			MetaTables 	= new LuaTable[(int)LuaType.LUA_NUMTAGS];
+            LightUserMetaTables = new Dictionary<System.Type, LuaTable>(32);
 		}
 	}
 

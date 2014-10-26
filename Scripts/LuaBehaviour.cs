@@ -82,7 +82,34 @@ namespace M8.Lua {
             mLua.L_RequireF(Library.UnityComponent.LIB_NAME, Library.UnityComponent.OpenLib, false);
             mLua.L_RequireF(Library.UnityBehaviour.LIB_NAME, Library.UnityBehaviour.OpenLib, false);
             mLua.L_RequireF(Library.UnityTransform.LIB_NAME, Library.UnityTransform.OpenLib, false);
+            mLua.L_RequireF(Library.UnityCollider.LIB_NAME, Library.UnityCollider.OpenLib, false);
+            mLua.L_RequireF(Library.UnityBounds.LIB_NAME, Library.UnityBounds.OpenLib, false);
 
+            Debug.Log(mLua.GetTop());
+
+            //add some variables
+            mLua.PushLightUserData(gameObject);
+            mLua.SetMetaTable(Library.UnityGameObject.META_NAME);
+            mLua.SetGlobal("gameObject");
+
+            mLua.PushLightUserData(transform);
+            mLua.SetMetaTable(Library.UnityTransform.META_NAME);
+            mLua.SetGlobal("transform");
+
+            //add some functions
+            mLua.PushCSharpFunction(LuaInvoke);
+            mLua.SetGlobal("invoke");
+
+            mLua.PushCSharpFunction(LuaInvokeRepeat);
+            mLua.SetGlobal("invokeRepeat");
+
+            mLua.PushCSharpFunction(LuaCancelInvoke);
+            mLua.SetGlobal("cancelInvoke");
+
+            mLua.PushCSharpFunction(LuaCancelAllInvoke);
+            mLua.SetGlobal("cancelAllInvoke");
+            
+            //execute
             ThreadStatus status = string.IsNullOrEmpty(scriptPath) ? mLua.L_DoString(scriptText.text) : mLua.L_DoFile(scriptPath);
             if(status != ThreadStatus.LUA_OK) {
                 throw new Exception(mLua.ToString(-1));
@@ -120,27 +147,7 @@ namespace M8.Lua {
                 M8.Auxiliary.AuxLateUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxLateUpdate>(gameObject);
                 aux.callback += delegate() { CallMethod(lateUpdateInd); };
             }
-
-            //add some variables
-            mLua.PushLightUserData(gameObject);
-            mLua.SetGlobal("gameObject");
-
-            mLua.PushLightUserData(transform);
-            mLua.SetGlobal("transform");
-
-            //add some functions
-            mLua.PushCSharpFunction(LuaInvoke);
-            mLua.SetGlobal("invoke");
-
-            mLua.PushCSharpFunction(LuaInvokeRepeat);
-            mLua.SetGlobal("invokeRepeat");
-
-            mLua.PushCSharpFunction(LuaCancelInvoke);
-            mLua.SetGlobal("cancelInvoke");
-
-            mLua.PushCSharpFunction(LuaCancelAllInvoke);
-            mLua.SetGlobal("cancelAllInvoke");
-                                    
+                        
             /*mLua.CreateTable(0, 2);
             mLua.PushLightUserData(gameObject);
             mLua.SetField(-2, "__go");

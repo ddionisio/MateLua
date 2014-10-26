@@ -5,55 +5,125 @@ using UniLua;
 
 namespace M8.Lua.Library {
     public static class UnityTransform {
+        public const string META_NAME = "Unity.Transform.Meta";
         public const string LIB_NAME = "Unity.Transform";
 
+        private static NameFuncPair[] m_funcs = null;
+        private static NameFuncPair[] l_funcs = null;
+
         public static int OpenLib(ILuaState lua) {
+            if(m_funcs == null)
+                m_funcs = new NameFuncPair[] {
+                    new NameFuncPair(Utils.GETTER, Get),
+                    new NameFuncPair(Utils.SETTER, Set),
+
+                    new NameFuncPair("compareTag", UnityComponent.CompareTag),
+                    new NameFuncPair("getComponent", UnityComponent.GetComponent),
+                    new NameFuncPair("getComponentInChildren", UnityComponent.GetComponentInChildren),
+                    new NameFuncPair("getComponentInParent", UnityComponent.GetComponentInParent),
+
+                    new NameFuncPair("sendMessage", UnityComponent.SendMessage),
+                    new NameFuncPair("sendMessageUpwards", UnityComponent.SendMessageUpwards),
+                    new NameFuncPair("broadcastMessage", UnityComponent.BroadcastMessage),
+
+                    new NameFuncPair("find", Find),
+                    new NameFuncPair("getChild", GetChild),
+                    new NameFuncPair("isChildOf", IsChildOf),
+
+                    new NameFuncPair("getPosition", GetPosition),
+                    new NameFuncPair("setPosition", SetPosition),
+                    new NameFuncPair("getLocalPosition", GetLocalPosition),
+                    new NameFuncPair("setLocalPosition", SetLocalPosition),
+                    new NameFuncPair("getRotation", GetRotation),
+                    new NameFuncPair("setRotation", SetRotation),
+                    new NameFuncPair("getLocalRotation", GetLocalRotation),
+                    new NameFuncPair("setLocalRotation", SetLocalRotation),
+                    new NameFuncPair("getLocalScale", GetLocalScale),
+                    new NameFuncPair("setLocalScale", SetLocalScale),
+                    new NameFuncPair("getEulerAngles", GetEulerAngles),
+                    new NameFuncPair("setEulerAngles", SetEulerAngles),
+                    new NameFuncPair("getLocalEulerAngles", GetLocalEulerAngles),
+                    new NameFuncPair("setLocalEulerAngles", SetLocalEulerAngles),
+
+                    new NameFuncPair("getUp", GetUp),
+                    new NameFuncPair("setUp", SetUp),
+                    new NameFuncPair("getRight", GetRight),
+                    new NameFuncPair("setRight", SetRight),
+                    new NameFuncPair("getForward", GetForward),
+                    new NameFuncPair("setForward", SetForward),
+
+                    new NameFuncPair("inverseTransformDirection", InverseTransformDirection),
+                    new NameFuncPair("inverseTransformPoint", InverseTransformPoint),
+                    new NameFuncPair("lookAt", LookAt),
+                    new NameFuncPair("rotateEulerLocal", RotateEulerLocal),
+                    new NameFuncPair("rotateEulerWorld", RotateEulerWorld),
+                    new NameFuncPair("rotateAxisLocal", RotateAxisLocal),
+                    new NameFuncPair("rotateAxisWorld", RotateAxisWorld),
+                    new NameFuncPair("transformDirection", TransformDirection),
+                    new NameFuncPair("transformPoint", TransformPoint),
+                    new NameFuncPair("translateLocal", TranslateLocal),
+                    new NameFuncPair("translateWorld", TranslateWorld),
+                    new NameFuncPair("translateRelativeTo", TranslateRelativeTo),
+                };
+            if(l_funcs == null)
+                l_funcs = new NameFuncPair[] {
+                };
+
+            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+
+            return 1;
+        }
+
+        private static int Get(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            string field = lua.L_CheckString(2);
+            if(!UnityComponent.PushField(lua, t, field)) {
+                switch(field) {
+                    case "parent":
+                        Transform parent = t.parent;
+                        if(parent) {
+                            lua.PushLightUserData(parent);
+                            lua.SetMetaTable(META_NAME);
+                        }
+                        else
+                            lua.PushNil();
+                        break;
+                    case "childCount":
+                        lua.PushInteger(t.childCount);
+                        break;
+                    default:
+                        if(!lua.L_GetMetaField(1, field))
+                            lua.L_Error("Unknown field: {0}", field);
+                        break;
+                }
+            }
+            return 1;
+        }
+
+        private static int Set(ILuaState lua) {
+            Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
+            string field = lua.L_CheckString(2);
+            if(!UnityComponent.SetField(lua, t, field)) {
+                switch(field) {
+                    case "parent":
+                        t.parent = Utils.CheckUnityObject<Transform>(lua, 3);
+                        break;
+                    default:
+                        lua.L_Error("Unknown field: {0}", field);
+                        break;
+                }
+            }
+            return 0;
+        }
+
+        /*public static int OpenLib(ILuaState lua) {
             NameFuncPair[] funcs = new NameFuncPair[] {
-                new NameFuncPair("GetParent", GetParent),
-                new NameFuncPair("Find", Find),
-                new NameFuncPair("GetChildCount", GetChildCount),
-                new NameFuncPair("GetChild", GetChild),
-                new NameFuncPair("IsChildOf", IsChildOf),
-
-                new NameFuncPair("GetPosition", GetPosition),
-                new NameFuncPair("SetPosition", SetPosition),
-                new NameFuncPair("GetLocalPosition", GetLocalPosition),
-                new NameFuncPair("SetLocalPosition", SetLocalPosition),
-                new NameFuncPair("GetRotation", GetRotation),
-                new NameFuncPair("SetRotation", SetRotation),
-                new NameFuncPair("GetLocalRotation", GetLocalRotation),
-                new NameFuncPair("SetLocalRotation", SetLocalRotation),
-                new NameFuncPair("GetLocalScale", GetLocalScale),
-                new NameFuncPair("SetLocalScale", SetLocalScale),
-                new NameFuncPair("GetEulerAngles", GetEulerAngles),
-                new NameFuncPair("SetEulerAngles", SetEulerAngles),
-                new NameFuncPair("GetLocalEulerAngles", GetLocalEulerAngles),
-                new NameFuncPair("SetLocalEulerAngles", SetLocalEulerAngles),
-
-                new NameFuncPair("GetUp", GetUp),
-                new NameFuncPair("SetUp", SetUp),
-                new NameFuncPair("GetRight", GetRight),
-                new NameFuncPair("SetRight", SetRight),
-                new NameFuncPair("GetForward", GetForward),
-                new NameFuncPair("SetForward", SetForward),
-
-                new NameFuncPair("InverseTransformDirection", InverseTransformDirection),
-                new NameFuncPair("InverseTransformPoint", InverseTransformPoint),
-                new NameFuncPair("LookAt", LookAt),
-                new NameFuncPair("RotateEulerLocal", RotateEulerLocal),
-                new NameFuncPair("RotateEulerWorld", RotateEulerWorld),
-                new NameFuncPair("RotateAxisLocal", RotateAxisLocal),
-                new NameFuncPair("RotateAxisWorld", RotateAxisWorld),
-                new NameFuncPair("TransformDirection", TransformDirection),
-                new NameFuncPair("TransformPoint", TransformPoint),
-                new NameFuncPair("TranslateLocal", TranslateLocal),
-                new NameFuncPair("TranslateWorld", TranslateWorld),
-                new NameFuncPair("TranslateRelativeTo", TranslateRelativeTo),
+                
             };
 
             lua.L_NewLib(funcs);
             return 1;
-        }
+        }*/
 
         private static int GetParent(ILuaState lua) {
             Transform t = Utils.CheckUnityObject<Transform>(lua, 1);

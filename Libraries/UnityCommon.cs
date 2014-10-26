@@ -4,37 +4,105 @@ using System.Collections;
 using UniLua;
 
 namespace M8.Lua.Library {
+    public static class UnityCommon {
+        public static void PushGameObject(ILuaState lua, GameObject go) {
+            if(go) {
+                lua.PushLightUserData(go);
+                lua.SetMetaTable(UnityGameObject.META_NAME);
+            }
+            else
+                lua.PushNil();
+        }
+
+        public static void PushComponent(ILuaState lua, Component c) {
+            if(c) {
+                lua.PushLightUserData(c);
+
+                //determine meta table
+                if(c is Transform)
+                    lua.SetMetaTable(UnityTransform.META_NAME);
+                else if(c is Behaviour) //default to Behaviour
+                    lua.SetMetaTable(UnityBehaviour.META_NAME);
+                else //default to Component
+                    lua.SetMetaTable(UnityComponent.META_NAME);
+            }
+            else //null given,
+                lua.PushNil();
+        }
+    }
+
 #region Object
     public static class UnityObject {
+        public const string META_NAME = "Unity.Object.Meta";
         public const string LIB_NAME = "Unity.Object";
 
+        private static NameFuncPair[] m_funcs = null;
+        private static NameFuncPair[] l_funcs = null;
+
         public static int OpenLib(ILuaState lua) {
-            NameFuncPair[] funcs = new NameFuncPair[] {
-                //object
-                new NameFuncPair("GetName", GetName),
-                new NameFuncPair("SetName", SetName),
-            };
+            if(m_funcs == null)
+                m_funcs = new NameFuncPair[] {
+                    new NameFuncPair(Utils.GETTER, Get),
+                    new NameFuncPair(Utils.SETTER, Set),
+                };
+            if(l_funcs == null)
+                l_funcs = new NameFuncPair[] {
+                    new NameFuncPair("Cast", Cast),
+                    new NameFuncPair("Instantiate", Instantiate),
+                };
 
-            lua.L_NewLib(funcs);
+            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+
             return 1;
         }
 
-        /// <summary>
-        /// Returns name of given Object. string GetName(obj)
-        /// </summary>
-        /// <returns>string</returns>
-        private static int GetName(ILuaState lua) {
+        private static int Cast(ILuaState lua) {
             Object o = Utils.CheckUnityObject<Object>(lua, 1);
-            lua.PushString(o.name);
+            lua.PushLightUserData(o);
+            lua.SetMetaTable(META_NAME);
             return 1;
         }
 
-        /// <summary>
-        /// set given Object name. SetName(obj, string)
-        /// </summary>
-        private static int SetName(ILuaState lua) {
+        private static int Instantiate(ILuaState lua) {
             Object o = Utils.CheckUnityObject<Object>(lua, 1);
-            o.name = lua.L_CheckString(2);
+            Object newObj = Object.Instantiate(o);
+            if(newObj is GameObject) {
+                //return with meta
+                lua.PushLightUserData(newObj);
+            }
+            else {
+                lua.PushLightUserData(newObj);
+                lua.SetMetaTable(META_NAME);
+            }
+            return 1;
+        }
+
+        private static int Get(ILuaState lua) {
+            Object o = Utils.CheckUnityObject<Object>(lua, 1);
+            string field = lua.L_CheckString(2);
+            switch(field) {
+                case "name":
+                    lua.PushString(o.name);
+                    break;
+                default:
+                    if(!lua.L_GetMetaField(1, field))
+                        lua.L_Error("Unknown field: {0}", field);
+                    break;
+            }
+            return 1;
+        }
+
+        private static int Set(ILuaState lua) {
+            Object o = Utils.CheckUnityObject<Object>(lua, 1);
+            string field = lua.L_CheckString(2);
+            switch(field) {
+                case "name":
+                    o.name = lua.L_CheckString(3);
+                    break;
+                default:
+                    lua.L_Error("Unknown field: {0}", field);
+                    break;
+            }
             return 0;
         }
     }
@@ -42,51 +110,123 @@ namespace M8.Lua.Library {
 
 #region GameObject
     public static class UnityGameObject {
+        public const string META_NAME = "Unity.GameObject.Meta";
         public const string LIB_NAME = "Unity.GameObject";
 
+        private static NameFuncPair[] m_funcs = null;
+        private static NameFuncPair[] l_funcs = null;
+
         public static int OpenLib(ILuaState lua) {
-            NameFuncPair[] funcs = new NameFuncPair[] {
-                new NameFuncPair("IsActiveSelf", IsActiveSelf),
-                new NameFuncPair("IsActiveInHierarchy", IsActiveInHierarchy),
-                new NameFuncPair("SetActive", SetActive),
-                new NameFuncPair("GetLayer", GetLayer),
-                new NameFuncPair("SetLayer", SetLayer),
+            if(m_funcs == null)
+                m_funcs = new NameFuncPair[] {
+                    new NameFuncPair(Utils.GETTER, Get),
+                    new NameFuncPair(Utils.SETTER, Set),
 
-                new NameFuncPair("GetTag", GetTag),
-                new NameFuncPair("SetTag", SetTag),
-                new NameFuncPair("CompareTag", CompareTag),
-                new NameFuncPair("GetComponent", GetComponent),
-                new NameFuncPair("GetComponentInChildren", GetComponentInChildren),
-                new NameFuncPair("GetComponentInParent", GetComponentInParent),
-                new NameFuncPair("GetTransform", GetTransform),
-                new NameFuncPair("GetCollider", GetCollider),
-                new NameFuncPair("GetRigidbody", GetRigidbody),
-                new NameFuncPair("SendMessage", SendMessage),
-                new NameFuncPair("SendMessageUpwards", SendMessageUpwards),
-                new NameFuncPair("BroadcastMessage", BroadcastMessage),
-            };
+                    new NameFuncPair("setActive", SetActive),
 
-            lua.L_NewLib(funcs);
+                    new NameFuncPair("compareTag", CompareTag),
+                    new NameFuncPair("getComponent", GetComponent),
+                    new NameFuncPair("getComponentInChildren", GetComponentInChildren),
+                    new NameFuncPair("getComponentInParent", GetComponentInParent),
+                    new NameFuncPair("sendMessage", SendMessage),
+                    new NameFuncPair("sendMessageUpwards", SendMessageUpwards),
+                    new NameFuncPair("broadcastMessage", BroadcastMessage),
+                };
+            if(l_funcs == null)
+                l_funcs = new NameFuncPair[] {
+                    new NameFuncPair("New", New),
+                    new NameFuncPair("Find", Find),
+                    new NameFuncPair("FindGameObjectWithTag", FindGameObjectWithTag),
+                };
+
+            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+
             return 1;
         }
 
-        /// <summary>
-        /// Returns if given GameObject is active. bool IsActiveSelf(go)
-        /// </summary>
-        /// <returns>string</returns>
-        private static int IsActiveSelf(ILuaState lua) {
+        private static int Get(ILuaState lua) {
             GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            lua.PushBoolean(go.activeSelf);
+            string field = lua.L_CheckString(2);
+            
+            switch(field) {
+                case "name":
+                    lua.PushString(go.name);
+                    break;
+                case "activeSelf":
+                    lua.PushBoolean(go.activeSelf);
+                    break;
+                case "activeInHierarchy":
+                    lua.PushBoolean(go.activeInHierarchy);
+                    break;
+                case "layer":
+                    lua.PushInteger(go.layer);
+                    break;
+                case "tag":
+                    lua.PushString(go.tag);
+                    break;
+                case "transform":
+                    UnityCommon.PushComponent(lua, go.transform);
+                    break;
+                case "collider":
+                    UnityCommon.PushComponent(lua, go.collider);
+                    break;
+                case "rigidbody":
+                    UnityCommon.PushComponent(lua, go.rigidbody);
+                    break;
+                default:
+                    if(!lua.L_GetMetaField(1, field))
+                        lua.L_Error("Unknown field: {0}", field);
+                    break;
+            }
+
             return 1;
         }
 
-        /// <summary>
-        /// Returns if given GameObject is active in hierarchy. bool IsActiveInHierarchy(go)
-        /// </summary>
-        /// <returns>string</returns>
-        private static int IsActiveInHierarchy(ILuaState lua) {
+        private static int Set(ILuaState lua) {
             GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            lua.PushBoolean(go.activeInHierarchy);
+            string field = lua.L_CheckString(2);
+
+            switch(field) {
+                case "name":
+                    go.name = lua.L_CheckString(3);
+                    break;
+                case "layer":
+                    go.layer = lua.L_CheckInteger(3);
+                    break;
+                case "tag":
+                    go.tag = lua.L_CheckString(3);
+                    break;
+                default:
+                    lua.L_Error("Unknown field: {0}", field);
+                    break;
+            }
+                
+            return 0;
+        }
+
+        private static int New(ILuaState lua) {
+            string name = lua.L_CheckString(1);
+
+            //components?
+
+            GameObject go = new GameObject(name);
+            UnityCommon.PushGameObject(lua, go);
+            return 1;
+        }
+
+        private static int Find(ILuaState lua) {
+            string name = lua.L_CheckString(1);
+
+            GameObject go = GameObject.Find(name);
+            UnityCommon.PushGameObject(lua, go);
+            return 1;
+        }
+
+        private static int FindGameObjectWithTag(ILuaState lua) {
+            string tag = lua.L_CheckString(1);
+
+            GameObject go = GameObject.FindGameObjectWithTag(tag);
+            UnityCommon.PushGameObject(lua, go);
             return 1;
         }
 
@@ -97,44 +237,6 @@ namespace M8.Lua.Library {
             GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
             bool active = lua.ToBoolean(2);
             go.SetActive(active);
-            return 0;
-        }
-
-        /// <summary>
-        /// Returns the layer of GameObject. int GetLayer(go)
-        /// </summary>
-        /// <returns>layer index [0, 31]</returns>
-        private static int GetLayer(ILuaState lua) {
-            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            lua.PushInteger(go.layer);
-            return 1;
-        }
-
-        /// <summary>
-        /// set given GameObject layer. SetTag(go, int)
-        /// </summary>
-        private static int SetLayer(ILuaState lua) {
-            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            go.layer = lua.L_CheckInteger(2);
-            return 0;
-        }
-
-        /// <summary>
-        /// Returns the tag of GameObject. string GetTag(go)
-        /// </summary>
-        /// <returns>tag</returns>
-        private static int GetTag(ILuaState lua) {
-            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            lua.PushString(go.tag);
-            return 1;
-        }
-
-        /// <summary>
-        /// set given GameObject tag. SetTag(go, string)
-        /// </summary>
-        private static int SetTag(ILuaState lua) {
-            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            go.tag = lua.L_CheckString(2);
             return 0;
         }
 
@@ -158,10 +260,7 @@ namespace M8.Lua.Library {
             string type = lua.L_CheckString(2);
 
             Component c = go.GetComponent(type);
-            if(c)
-                lua.PushLightUserData(c);
-            else
-                lua.PushNil();
+            UnityCommon.PushComponent(lua, c);
             return 1;
         }
 
@@ -175,10 +274,7 @@ namespace M8.Lua.Library {
             System.Type type = System.Type.GetType(typeString);
             if(type != null) {
                 Component c = go.GetComponentInChildren(type);
-                if(c)
-                    lua.PushLightUserData(c);
-                else
-                    lua.PushNil();
+                UnityCommon.PushComponent(lua, c);
             }
             else
                 lua.L_ArgError(2, "Type not exists: "+typeString);
@@ -195,51 +291,10 @@ namespace M8.Lua.Library {
             System.Type type = System.Type.GetType(typeString);
             if(type != null) {
                 Component c = go.GetComponentInParent(type);
-                if(c)
-                    lua.PushLightUserData(c);
-                else
-                    lua.PushNil();
+                UnityCommon.PushComponent(lua, c);
             }
             else
                 lua.L_ArgError(2, "Type not exists: "+typeString);
-            return 1;
-        }
-
-        /// <summary>
-        /// Returns the transform of GameObject. Transform GetTransform(go)
-        /// </summary>
-        /// <returns>transform</returns>
-        private static int GetTransform(ILuaState lua) {
-            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            lua.PushLightUserData(go.transform);
-            return 1;
-        }
-
-        /// <summary>
-        /// Returns the collider of GameObject. collider GetCollider(go)
-        /// </summary>
-        /// <returns>transform</returns>
-        private static int GetCollider(ILuaState lua) {
-            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            Collider coll = go.collider;
-            if(coll)
-                lua.PushLightUserData(coll);
-            else
-                lua.PushNil();
-            return 1;
-        }
-
-        /// <summary>
-        /// Returns the rigidbody of GameObject. rigidbody GetRigidbody(go)
-        /// </summary>
-        /// <returns>transform</returns>
-        private static int GetRigidbody(ILuaState lua) {
-            GameObject go = Utils.CheckUnityObject<GameObject>(lua, 1);
-            Rigidbody body = go.rigidbody;
-            if(body)
-                lua.PushLightUserData(body);
-            else
-                lua.PushNil();
             return 1;
         }
 
@@ -349,126 +404,134 @@ namespace M8.Lua.Library {
 
 #region Component
     public static class UnityComponent {
+        public const string META_NAME = "Unity.Component.Meta";
         public const string LIB_NAME = "Unity.Component";
 
+        private static NameFuncPair[] m_funcs = null;
+        private static NameFuncPair[] l_funcs = null;
+
         public static int OpenLib(ILuaState lua) {
-            NameFuncPair[] funcs = new NameFuncPair[] {
-                new NameFuncPair("GetGameObject", GetGameObject),
+            if(m_funcs == null)
+                m_funcs = new NameFuncPair[] {
+                    new NameFuncPair(Utils.GETTER, Get),
+                    new NameFuncPair(Utils.SETTER, Set),
 
-                new NameFuncPair("GetTag", GetTag),
-                new NameFuncPair("SetTag", SetTag),
-                new NameFuncPair("CompareTag", CompareTag),
-                new NameFuncPair("GetComponent", GetComponent),
-                new NameFuncPair("GetComponentInChildren", GetComponentInChildren),
-                new NameFuncPair("GetComponentInParent", GetComponentInParent),
-                new NameFuncPair("GetTransform", GetTransform),
-                new NameFuncPair("GetCollider", GetCollider),
-                new NameFuncPair("GetRigidbody", GetRigidbody),
-                new NameFuncPair("SendMessage", SendMessage),
-                new NameFuncPair("SendMessageUpwards", SendMessageUpwards),
-                new NameFuncPair("BroadcastMessage", BroadcastMessage),
-            };
+                    new NameFuncPair("compareTag", CompareTag),
+                    new NameFuncPair("getComponent", GetComponent),
+                    new NameFuncPair("getComponentInChildren", GetComponentInChildren),
+                    new NameFuncPair("getComponentInParent", GetComponentInParent),
 
-            lua.L_NewLib(funcs);
+                    new NameFuncPair("sendMessage", SendMessage),
+                    new NameFuncPair("sendMessageUpwards", SendMessageUpwards),
+                    new NameFuncPair("broadcastMessage", BroadcastMessage),
+                };
+            if(l_funcs == null)
+                l_funcs = new NameFuncPair[] {
+                };
+
+            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+
             return 1;
         }
 
-        private static int GetGameObject(ILuaState lua) {
+        public static bool PushField(ILuaState lua, Component comp, string field) {
+            switch(field) {
+                case "name":
+                    lua.PushString(comp.name);
+                    return true;
+                case "tag":
+                    lua.PushString(comp.tag);
+                    return true;
+                case "gameObject":
+                    UnityCommon.PushGameObject(lua, comp.gameObject);
+                    return true;
+                case "transform":
+                    UnityCommon.PushComponent(lua, comp.transform);
+                    return true;
+                case "collider":
+                    UnityCommon.PushComponent(lua, comp.collider);
+                    return true;
+                case "rigidbody":
+                    UnityCommon.PushComponent(lua, comp.rigidbody);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+                
+        public static bool SetField(ILuaState lua, Component comp, string field) {
+            switch(field) {
+                case "name":
+                    comp.name = lua.L_CheckString(3);
+                    return true;
+                case "tag":
+                    comp.tag = lua.L_CheckString(3);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static int Get(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
-            lua.PushLightUserData(comp.gameObject);
+            string field = lua.L_CheckString(2);
+            if(!PushField(lua, comp, field))
+                if(!lua.L_GetMetaField(1, field))
+                    lua.L_Error("Unknown field: {0}", field);
             return 1;
         }
 
-        private static int GetTag(ILuaState lua) {
+        private static int Set(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
-            lua.PushString(comp.tag);
-            return 1;
-        }
-
-        private static int SetTag(ILuaState lua) {
-            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
-            comp.tag = lua.L_CheckString(2);
+            string field = lua.L_CheckString(2);
+            if(!SetField(lua, comp, field))
+                lua.L_Error("Unknown field: {0}", field);
             return 0;
         }
 
-        private static int CompareTag(ILuaState lua) {
+        public static int CompareTag(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string tag = lua.L_CheckString(2);
             lua.PushBoolean(comp.CompareTag(tag));
             return 1;
         }
 
-        private static int GetComponent(ILuaState lua) {
+        public static int GetComponent(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string type = lua.L_CheckString(2);
 
             Component c = comp.GetComponent(type);
-            if(c)
-                lua.PushLightUserData(c);
-            else
-                lua.PushNil();
+            UnityCommon.PushComponent(lua, c);
             return 1;
         }
 
-        private static int GetComponentInChildren(ILuaState lua) {
+        public static int GetComponentInChildren(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
             if(type != null) {
                 Component c = comp.GetComponentInChildren(type);
-                if(c)
-                    lua.PushLightUserData(c);
-                else
-                    lua.PushNil();
+                UnityCommon.PushComponent(lua, c);
             }
             else
                 lua.L_ArgError(2, "Type not exists: "+typeString);
             return 1;
         }
 
-        private static int GetComponentInParent(ILuaState lua) {
+        public static int GetComponentInParent(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string typeString = lua.L_CheckString(2);
             System.Type type = System.Type.GetType(typeString);
             if(type != null) {
                 Component c = comp.GetComponentInParent(type);
-                if(c)
-                    lua.PushLightUserData(c);
-                else
-                    lua.PushNil();
+                UnityCommon.PushComponent(lua, c);
             }
             else
                 lua.L_ArgError(2, "Type not exists: "+typeString);
             return 1;
         }
 
-        private static int GetTransform(ILuaState lua) {
-            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
-            lua.PushLightUserData(comp.transform);
-            return 1;
-        }
-
-        private static int GetCollider(ILuaState lua) {
-            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
-            Collider coll = comp.collider;
-            if(coll)
-                lua.PushLightUserData(coll);
-            else
-                lua.PushNil();
-            return 1;
-        }
-
-        private static int GetRigidbody(ILuaState lua) {
-            Component comp = Utils.CheckUnityObject<Component>(lua, 1);
-            Rigidbody body = comp.rigidbody;
-            if(body)
-                lua.PushLightUserData(body);
-            else
-                lua.PushNil();
-            return 1;
-        }
-
-        private static int SendMessage(ILuaState lua) {
+        public static int SendMessage(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string method = lua.L_CheckString(2);
 
@@ -499,7 +562,7 @@ namespace M8.Lua.Library {
             return 0;
         }
 
-        private static int SendMessageUpwards(ILuaState lua) {
+        public static int SendMessageUpwards(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string method = lua.L_CheckString(2);
 
@@ -533,7 +596,7 @@ namespace M8.Lua.Library {
         /// <summary>
         /// Send message. BroadcastMessage(go, method, var)
         /// </summary>
-        private static int BroadcastMessage(ILuaState lua) {
+        public static int BroadcastMessage(ILuaState lua) {
             Component comp = Utils.CheckUnityObject<Component>(lua, 1);
             string method = lua.L_CheckString(2);
 
@@ -568,33 +631,72 @@ namespace M8.Lua.Library {
 
 #region Behaviour
     public static class UnityBehaviour {
+        public const string META_NAME = "Unity.Behaviour.Meta";
         public const string LIB_NAME = "Unity.Behaviour";
 
+        private static NameFuncPair[] m_funcs = null;
+        private static NameFuncPair[] l_funcs = null;
+
         public static int OpenLib(ILuaState lua) {
-            NameFuncPair[] funcs = new NameFuncPair[] {
-                new NameFuncPair("IsEnabled", IsEnabled),
-                new NameFuncPair("SetEnabled", SetEnabled),
-            };
+            if(m_funcs == null)
+                m_funcs = new NameFuncPair[] {
+                    new NameFuncPair(Utils.GETTER, Get),
+                    new NameFuncPair(Utils.SETTER, Set),
 
-            lua.L_NewLib(funcs);
+                    new NameFuncPair("compareTag", UnityComponent.CompareTag),
+                    new NameFuncPair("getComponent", UnityComponent.GetComponent),
+                    new NameFuncPair("getComponentInChildren", UnityComponent.GetComponentInChildren),
+                    new NameFuncPair("getComponentInParent", UnityComponent.GetComponentInParent),
+
+                    new NameFuncPair("sendMessage", UnityComponent.SendMessage),
+                    new NameFuncPair("sendMessageUpwards", UnityComponent.SendMessageUpwards),
+                    new NameFuncPair("broadcastMessage", UnityComponent.BroadcastMessage),
+                };
+            if(l_funcs == null)
+                l_funcs = new NameFuncPair[] {
+                };
+
+            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+
             return 1;
         }
 
-        /// <summary>
-        /// Check if given Behaviour is enabled. bool IsEnabled(behaviour)
-        /// </summary>
-        private static int IsEnabled(ILuaState lua) {
+        public static bool PushField(ILuaState lua, Behaviour b, string field) {
+            if(!UnityComponent.PushField(lua, b, field)) {
+                switch(field) {
+                    case "enabled":
+                        lua.PushBoolean(b.enabled);
+                        return true;
+                }
+            }
+            return false;
+        }
+                
+        public static bool SetField(ILuaState lua, Behaviour b, string field) {
+            if(!UnityComponent.SetField(lua, b, field)) {
+                switch(field) {
+                    case "enabled":
+                        b.enabled = lua.ToBoolean(3);
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private static int Get(ILuaState lua) {
             Behaviour b = Utils.CheckUnityObject<Behaviour>(lua, 1);
-            lua.PushBoolean(b.enabled);
+            string field = lua.L_CheckString(2);
+            if(!PushField(lua, b, field))
+                if(!lua.L_GetMetaField(1, field))
+                    lua.L_Error("Unknown field: {0}", field);
             return 1;
         }
 
-        /// <summary>
-        /// Set Behaviour enabled. SetEnabled(behaviour)
-        /// </summary>
-        private static int SetEnabled(ILuaState lua) {
+        private static int Set(ILuaState lua) {
             Behaviour b = Utils.CheckUnityObject<Behaviour>(lua, 1);
-            b.enabled = lua.ToBoolean(2);
+            string field = lua.L_CheckString(2);
+            if(!SetField(lua, b, field))
+                lua.L_Error("Unknown field: {0}", field);
             return 0;
         }
     }

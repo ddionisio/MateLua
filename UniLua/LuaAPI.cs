@@ -116,6 +116,11 @@ namespace UniLua
 		ThreadStatus	Status { get; }
 
 		string 	DebugGetInstructionHistory();
+
+        //EXTENSION
+        int NewMetaTable(string name);
+        void GetMetaTable(string name);
+        void SetMetaTable(string name);
 	}
 
 	public interface ILuaState : ILuaAPI, ILuaAuxLib
@@ -1322,6 +1327,11 @@ namespace UniLua
 					mt = ud.MetaTable;
 					break;
 				}
+                case (int)LuaType.LUA_TLIGHTUSERDATA: {
+                    System.Type t = addr.V.OValue.GetType();
+                    G.LightUserMetaTables.TryGetValue(t, out mt);
+                    break;
+                }
 				default:
 				{
 					mt = G.MetaTables[addr.V.Tt];
@@ -1370,6 +1380,12 @@ namespace UniLua
 					ud.MetaTable = mt;
 					break;
 				}
+                case (int)LuaType.LUA_TLIGHTUSERDATA: 
+                {
+                    System.Type t = addr.V.OValue.GetType();
+                    G.LightUserMetaTables.Add(t, mt);
+                    break;
+                }
 				default:
 				{
 					G.MetaTables[addr.V.Tt] = mt;
@@ -1632,6 +1648,26 @@ namespace UniLua
 		// 	API.SetGlobal( name );
 		// }
 
+        //EXTENSION
+        int ILuaAPI.NewMetaTable(string name) {
+            API.GetField(LuaDef.LUA_REGISTRYINDEX, name);
+            if(!API.IsNil(-1))
+                return 0;
+            API.Pop(1);
+            API.NewTable();
+            API.PushValue(-1);
+            API.SetField(LuaDef.LUA_REGISTRYINDEX, name);
+            return 1;
+        }
+
+        void ILuaAPI.GetMetaTable(string name) {
+            API.GetField(LuaDef.LUA_REGISTRYINDEX, name);
+        }
+
+        void ILuaAPI.SetMetaTable(string name) {
+            API.GetMetaTable(name);
+            API.SetMetaTable(-2);
+        }
 	}
 
 }
