@@ -7,7 +7,7 @@ namespace M8.Lua.Library {
     /// <summary>
     /// Used as a wrapper for Bounds
     /// </summary>
-    public class UnityBounds {
+    public class UnityBounds : Container {
         public const string META_NAME = "Unity.Bounds.Meta";
         public const string LIB_NAME = "Unity.Bounds";
 
@@ -258,6 +258,8 @@ namespace M8.Lua.Library {
 
             return 1;
         }
+
+        public object data { get { return mBounds; } }
 
         public UnityBounds(Bounds b) { mBounds = b; }
 

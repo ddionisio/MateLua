@@ -29,7 +29,7 @@ namespace M8.Lua {
             lua.L_NewLib(libFuncs);
         }
 
-        public static void NewLibMetaGetterSetter(ILuaState lua, string metaName, NameFuncPair[] metaFuncs, NameFuncPair[] libFuncs) {
+        public static void NewMetaGetterSetter(ILuaState lua, string metaName, NameFuncPair[] metaFuncs) {
             lua.NewMetaTable(metaName);
             lua.L_SetFuncs(metaFuncs, 0);
 
@@ -42,6 +42,10 @@ namespace M8.Lua {
             lua.PushString(SETTER);
             lua.GetTable(-3); //lib.setter
             lua.SetTable(-3); //meta.__newindex = lib.setter
+        }
+
+        public static void NewLibMetaGetterSetter(ILuaState lua, string metaName, NameFuncPair[] metaFuncs, NameFuncPair[] libFuncs) {
+            NewMetaGetterSetter(lua, metaName, metaFuncs);
 
             lua.L_NewLib(libFuncs);
         }

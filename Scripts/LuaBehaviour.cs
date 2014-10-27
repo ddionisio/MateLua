@@ -20,6 +20,15 @@ namespace M8.Lua {
         private const string luaMethodLateUpdate = "lateUpdate";
         private const string luaMethodFixedUpdate = "fixedUpdate";
 
+        private const string luaMethodTriggerEnter = "onTriggerEnter";
+        private const string luaMethodTriggerStay = "onTriggerStay";
+        private const string luaMethodTriggerExit = "onTriggerExit";
+
+        private const string luaMethodCollisionEnter = "onCollisionEnter";
+        private const string luaMethodCollisionStay = "onCollisionStay";
+        private const string luaMethodCollisionExit = "onCollisionExit";
+
+        //mate
         private const string luaMethodOnSpawned = "onSpawned";
         private const string luaMethodOnDespawned = "onDespawned";
 
@@ -30,14 +39,16 @@ namespace M8.Lua {
 
         private ILuaState mLua;
 
+        //unity stuff
         private int mLuaMethodStart;
         private int mLuaMethodOnEnable;
         private int mLuaMethodOnDisable;
         private int mLuaMethodOnDestroy;
 
+        //mate stuff
         private int mLuaMethodOnSpawned;
         private int mLuaMethodOnDespawned;
-
+                
         public ILuaState lua { get { return mLua; } }
 
         //Mate Calls
@@ -84,9 +95,14 @@ namespace M8.Lua {
             mLua.L_RequireF(Library.UnityTransform.LIB_NAME, Library.UnityTransform.OpenLib, false);
             mLua.L_RequireF(Library.UnityCollider.LIB_NAME, Library.UnityCollider.OpenLib, false);
             mLua.L_RequireF(Library.UnityBounds.LIB_NAME, Library.UnityBounds.OpenLib, false);
+            mLua.L_RequireF(Library.UnityRigidbody.LIB_NAME, Library.UnityRigidbody.OpenLib, false);
+            mLua.L_RequireF(Library.UnityCollision.LIB_NAME, Library.UnityCollision.OpenLib, false);
 
-            Debug.Log(mLua.GetTop());
+            //meta-only objects
+            Library.UnityContactPoint.DefineMeta(mLua);
 
+            mLua.Pop(mLua.GetTop());
+            
             //add some variables
             mLua.NewUserData(gameObject);
             mLua.SetMetaTable(Library.UnityGameObject.META_NAME);
@@ -147,15 +163,33 @@ namespace M8.Lua {
                 M8.Auxiliary.AuxLateUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxLateUpdate>(gameObject);
                 aux.callback += delegate() { CallMethod(lateUpdateInd); };
             }
+
+            int triggerEnterInd = GetMethod(luaMethodTriggerEnter);
+            int triggerStayInd = GetMethod(luaMethodTriggerStay);
+            int triggerExitInd = GetMethod(luaMethodTriggerExit);
+            if(triggerEnterInd != nil || triggerStayInd != nil || triggerExitInd != nil) {
+                M8.Auxiliary.AuxTrigger aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxTrigger>(gameObject);
+                if(triggerEnterInd != nil) aux.enterCallback += delegate(Collider c) { CallMethodCollider(triggerEnterInd, c); };
+                if(triggerStayInd != nil) aux.stayCallback += delegate(Collider c) { CallMethodCollider(triggerStayInd, c); };
+                if(triggerExitInd != nil) aux.exitCallback += delegate(Collider c) { CallMethodCollider(triggerExitInd, c); };
+            }
+
+            int collEnterInd = GetMethod(luaMethodCollisionEnter);
+            int collStayInd = GetMethod(luaMethodCollisionStay);
+            int collExitInd = GetMethod(luaMethodCollisionExit);
+            if(collEnterInd != nil || collStayInd != nil || collExitInd != nil) {
+                M8.Auxiliary.AuxCollision aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxCollision>(gameObject);
+                if(collEnterInd != nil) aux.enterCallback += delegate(Collision c) { CallMethodCollision(collEnterInd, c); };
+                if(collStayInd != nil) aux.stayCallback += delegate(Collision c) { CallMethodCollision(collStayInd, c); };
+                if(collExitInd != nil) aux.exitCallback += delegate(Collision c) { CallMethodCollision(collExitInd, c); };
+            }
                         
             /*mLua.CreateTable(0, 2);
             mLua.PushLightUserData(gameObject);
             mLua.SetField(-2, "__go");
             mLua.PushCSharpFunction(goname);
             mLua.SetField(-2, "name");*/
-
-            mLua.Pop(1);
-                                    
+                                                                        
             //awake
             if(awakeInd != nil)
                 CallMethod(awakeInd);
@@ -208,6 +242,62 @@ namespace M8.Lua {
             var status = mLua.PCall(0, 0, b);
 #else
             var status = mLua.PCall(0, 0, 0);
+#endif
+            if(status != ThreadStatus.LUA_OK) {
+                Debug.LogError(mLua.ToString(-1));
+            }
+
+#if MATE_LUA_TRACE
+            // remove `traceback' function
+            mLua.Remove(b);
+#endif
+        }
+
+        private void CallMethodCollider(int funcRef, Collider c) {
+            mLua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
+
+#if MATE_LUA_TRACE
+            // insert `traceback' function
+            var b = mLua.GetTop();
+            mLua.PushCSharpFunction(Traceback);
+            mLua.Insert(b);
+#endif
+
+            mLua.NewUserData(c);
+            mLua.SetMetaTable(Library.UnityCollider.META_NAME);
+
+#if MATE_LUA_TRACE
+            var status = mLua.PCall(1, 0, b);
+#else
+            var status = mLua.PCall(1, 0, 0);
+#endif
+            if(status != ThreadStatus.LUA_OK) {
+                Debug.LogError(mLua.ToString(-1));
+            }
+
+#if MATE_LUA_TRACE
+            // remove `traceback' function
+            mLua.Remove(b);
+#endif
+        }
+
+        private void CallMethodCollision(int funcRef, Collision c) {
+            mLua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
+
+#if MATE_LUA_TRACE
+            // insert `traceback' function
+            var b = mLua.GetTop();
+            mLua.PushCSharpFunction(Traceback);
+            mLua.Insert(b);
+#endif
+
+            mLua.NewUserData(c);
+            mLua.SetMetaTable(Library.UnityCollision.META_NAME);
+
+#if MATE_LUA_TRACE
+            var status = mLua.PCall(1, 0, b);
+#else
+            var status = mLua.PCall(1, 0, 0);
 #endif
             if(status != ThreadStatus.LUA_OK) {
                 Debug.LogError(mLua.ToString(-1));

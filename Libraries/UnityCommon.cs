@@ -34,6 +34,9 @@ namespace M8.Lua.Library {
                 case "name":
                     lua.PushString(obj.name);
                     return true;
+                case "instanceId":
+                    lua.PushInteger(obj.GetInstanceID());
+                    return true;
                 default:
                     return false;
             }
@@ -151,7 +154,7 @@ namespace M8.Lua.Library {
                     UnityCollider.Push(lua, go.collider);
                     break;
                 case "rigidbody":
-                    //UnityCommon.PushComponent(lua, go.rigidbody);
+                    UnityRigidbody.Push(lua, go.rigidbody);
                     break;
                 default:
                     if(!UnityObject.PushField(lua, go, field))
@@ -290,6 +293,11 @@ namespace M8.Lua.Library {
                         go.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
+                        object o = lua.ToUserData(3); Container c = o as Container;
+                        if(c != null) go.SendMessage(method, c.data, SendMessageOptions.DontRequireReceiver);
+                        else go.SendMessage(method, o, SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
                         go.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -324,6 +332,11 @@ namespace M8.Lua.Library {
                         go.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
+                        object o = lua.ToUserData(3); Container c = o as Container;
+                        if(c != null) go.SendMessageUpwards(method, c.data, SendMessageOptions.DontRequireReceiver);
+                        else go.SendMessageUpwards(method, o, SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
                         go.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -358,6 +371,11 @@ namespace M8.Lua.Library {
                         go.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
+                        object o = lua.ToUserData(3); Container c = o as Container;
+                        if(c != null) go.BroadcastMessage(method, c.data, SendMessageOptions.DontRequireReceiver);
+                        else go.BroadcastMessage(method, o, SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
                         go.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -428,7 +446,7 @@ namespace M8.Lua.Library {
                     UnityCollider.Push(lua, comp.collider);
                     return true;
                 case "rigidbody":
-                    //UnityCommon.PushComponent(lua, comp.rigidbody);
+                    UnityRigidbody.Push(lua, comp.rigidbody);
                     return true;
                 default:
                     return UnityObject.PushField(lua, comp, field);
@@ -518,6 +536,11 @@ namespace M8.Lua.Library {
                         comp.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
+                        object o = lua.ToUserData(3); Container c = o as Container;
+                        if(c != null) comp.SendMessage(method, c.data, SendMessageOptions.DontRequireReceiver);
+                        else comp.SendMessage(method, o, SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
                         comp.SendMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -549,6 +572,11 @@ namespace M8.Lua.Library {
                         comp.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
+                        object o = lua.ToUserData(3); Container c = o as Container;
+                        if(c != null) comp.SendMessageUpwards(method, c.data, SendMessageOptions.DontRequireReceiver);
+                        else comp.SendMessageUpwards(method, o, SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
                         comp.SendMessageUpwards(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
@@ -583,6 +611,11 @@ namespace M8.Lua.Library {
                         comp.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
+                        object o = lua.ToUserData(3); Container c = o as Container;
+                        if(c != null) comp.BroadcastMessage(method, c.data, SendMessageOptions.DontRequireReceiver);
+                        else comp.BroadcastMessage(method, o, SendMessageOptions.DontRequireReceiver);
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
                         comp.BroadcastMessage(method, lua.ToUserData(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     default:
