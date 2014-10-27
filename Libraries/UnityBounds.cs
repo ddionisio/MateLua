@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 using UniLua;
 
@@ -7,7 +6,7 @@ namespace M8.Lua.Library {
     /// <summary>
     /// Used as a wrapper for Bounds
     /// </summary>
-    public class UnityBounds : Container {
+    public class UnityBounds : IContainer {
         public const string META_NAME = "Unity.Bounds.Meta";
         public const string LIB_NAME = "Unity.Bounds";
 
@@ -42,7 +41,8 @@ namespace M8.Lua.Library {
                     new NameFuncPair("New", New),
                 };
 
-            Utils.NewLibMeta(lua, META_NAME, m_funcs, l_funcs);
+            Utils.NewMeta(lua, META_NAME, m_funcs);
+            lua.L_NewLib(l_funcs);
             return 1;
         }
 
@@ -229,9 +229,21 @@ namespace M8.Lua.Library {
             return 0;
         }
 
+        /// <summary>
+        /// bool, dist = bounds:IntersectRay(pt = {x, y, z}, dir = {x, y, z})
+        /// </summary>
         private static int IntersectRay(ILuaState lua) {
-            lua.L_Error("Not Implemented");
-            return 0;
+            UnityBounds b = lua.ToUserData(1) as UnityBounds;
+            if(b != null) {
+                Vector3 pt = Utils.TableToVector3(lua, 2);
+                Vector3 dir = Utils.TableToVector3(lua, 3);
+                float dist;
+                lua.PushBoolean(b.mBounds.IntersectRay(new Ray(pt, dir), out dist));
+                lua.PushNumber(dist);
+            }
+            else
+                lua.L_ArgError(1, "Not UnityBounds");
+            return 2;
         }
 
         private static int Intersects(ILuaState lua) {

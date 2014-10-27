@@ -1,9 +1,13 @@
-﻿using UnityEngine;
+﻿#define MATE_LUA_TRACE
+
+using UnityEngine;
 
 using UniLua;
 
 namespace M8.Lua {
     public struct Utils {
+        public const int nil = (int)LuaType.LUA_TNIL;
+
         public const string GETTER = "get";
         public const string SETTER = "set";
 
@@ -14,10 +18,7 @@ namespace M8.Lua {
             return obj;
         }
 
-        /// <summary>
-        /// Generate the table with given meta.
-        /// </summary>
-        public static void NewLibMeta(ILuaState lua, string metaName, NameFuncPair[] metaFuncs, NameFuncPair[] libFuncs) {
+        public static void NewMeta(ILuaState lua, string metaName, NameFuncPair[] metaFuncs) {
             lua.NewMetaTable(metaName);
 
             lua.PushString("__index");
@@ -25,8 +26,6 @@ namespace M8.Lua {
             lua.SetTable(-3); //meta.__index = meta
 
             lua.L_SetFuncs(metaFuncs, 0);
-
-            lua.L_NewLib(libFuncs);
         }
 
         public static void NewMetaGetterSetter(ILuaState lua, string metaName, NameFuncPair[] metaFuncs) {
@@ -44,10 +43,107 @@ namespace M8.Lua {
             lua.SetTable(-3); //meta.__newindex = lib.setter
         }
 
-        public static void NewLibMetaGetterSetter(ILuaState lua, string metaName, NameFuncPair[] metaFuncs, NameFuncPair[] libFuncs) {
-            NewMetaGetterSetter(lua, metaName, metaFuncs);
+        /// <summary>
+        /// Returns LuaType.LUA_TNIL if method is not found.
+        /// </summary>
+        public static int GetMethod(ILuaState lua, string name) {
+            lua.GetField(-1, name);
+            if(!lua.IsFunction(-1)) {
+                lua.Pop(1);
+                return nil;
+            }
 
-            lua.L_NewLib(libFuncs);
+            return lua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
+        }
+
+        /// <summary>
+        /// Call the given funcRef (from GetMethod)
+        /// </summary>
+        public static void CallMethod(ILuaState lua, int funcRef) {
+            lua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
+
+#if MATE_LUA_TRACE
+            // insert `traceback' function
+            var b = lua.GetTop();
+            lua.PushCSharpFunction(Traceback);
+            lua.Insert(b);
+
+            var status = lua.PCall(0, 0, b);
+#else
+            var status = lua.PCall(0, 0, 0);
+#endif
+            if(status != ThreadStatus.LUA_OK)
+                Debug.LogError(lua.ToString(-1));
+
+#if MATE_LUA_TRACE
+            // remove `traceback' function
+            lua.Remove(b);
+#endif
+        }
+
+        public static void CallMethod<T>(ILuaState lua, int funcRef, T objArg, string metaRef) {
+            lua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
+
+#if MATE_LUA_TRACE
+            // insert `traceback' function
+            var b = lua.GetTop();
+            lua.PushCSharpFunction(Traceback);
+            lua.Insert(b);
+#endif
+
+            lua.NewUserData(objArg);
+            if(!string.IsNullOrEmpty(metaRef)) lua.SetMetaTable(metaRef);
+
+#if MATE_LUA_TRACE
+            var status = lua.PCall(1, 0, b);
+#else
+            var status = lua.PCall(1, 0, 0);
+#endif
+            if(status != ThreadStatus.LUA_OK)
+                Debug.LogError(lua.ToString(-1));
+
+#if MATE_LUA_TRACE
+            // remove `traceback' function
+            lua.Remove(b);
+#endif
+        }
+
+        public static int Traceback(ILuaState lua) {
+            var msg = lua.ToString(1);
+            if(msg != null) {
+                lua.L_Traceback(lua, msg, 1);
+            }
+            // is there an error object?
+            else if(!lua.IsNoneOrNil(1)) {
+                // try its `tostring' metamethod
+                if(!lua.L_CallMeta(1, "__tostring")) {
+                    lua.PushString("(no error message)");
+                }
+            }
+            return 1;
+        }
+
+        public static Vector3 TableToVector3(ILuaState lua, int index) {
+            Vector3 ret;
+
+            lua.L_CheckType(index, LuaType.LUA_TTABLE);
+
+            lua.GetField(index, "x");
+            lua.L_ArgCheck(!lua.IsNil(-1), index, "x is nil");
+            ret.x = (float)lua.ToNumber(-1);
+            lua.Pop(1);
+
+            lua.GetField(index, "y");
+            lua.L_ArgCheck(!lua.IsNil(-1), index, "y is nil");
+            ret.y = (float)lua.ToNumber(-1);
+            lua.Pop(1);
+
+            lua.GetField(index, "z");
+            lua.L_ArgCheck(!lua.IsNil(-1), index, "z is nil");
+            ret.z = (float)lua.ToNumber(-1);
+            lua.Pop(1);
+
+            return ret;
         }
     }
 }

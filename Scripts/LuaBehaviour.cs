@@ -9,7 +9,7 @@ using UniLua;
 
 namespace M8.Lua {
     [AddComponentMenu("M8/Lua/Behaviour")]
-    public class LuaBehaviour : MonoBehaviour {
+    public class LuaBehaviour : MonoBehaviour, ILuaInitializer {
         private const string luaMethodAwake = "awake";
         private const string luaMethodStart = "start";
         private const string luaMethodOnEnable = "onEnable";
@@ -31,15 +31,14 @@ namespace M8.Lua {
         //mate
         private const string luaMethodOnSpawned = "onSpawned";
         private const string luaMethodOnDespawned = "onDespawned";
-
-        private const int nil = (int)LuaType.LUA_TNIL;
-
+                
         public string scriptPath; //path to lua file
         public TextAsset scriptText; //if code path is empty, use this for loading
 
         private ILuaState mLua;
 
         //unity stuff
+        private int mAwakeInd;
         private int mLuaMethodStart;
         private int mLuaMethodOnEnable;
         private int mLuaMethodOnDisable;
@@ -54,76 +53,148 @@ namespace M8.Lua {
         //Mate Calls
 
         void OnSpawned() {
-            if(mLuaMethodOnSpawned != nil)
-                CallMethod(mLuaMethodOnSpawned);
+            if(mLuaMethodOnSpawned != Utils.nil)
+                Utils.CallMethod(mLua, mLuaMethodOnSpawned);
         }
 
         void OnDespawned() {
-            if(mLuaMethodOnDespawned != nil)
-                CallMethod(mLuaMethodOnDespawned);
+            if(mLuaMethodOnDespawned != Utils.nil)
+                Utils.CallMethod(mLua, mLuaMethodOnDespawned);
         }
 
         //Unity Calls
                 
         void OnDestroy() {
-            if(mLuaMethodOnDestroy != nil)
-                CallMethod(mLuaMethodOnDestroy);
+            if(mLuaMethodOnDestroy != Utils.nil)
+                Utils.CallMethod(mLua, mLuaMethodOnDestroy);
         }
 
         void OnEnable() {
-            if(mLuaMethodOnEnable != nil)
-                CallMethod(mLuaMethodOnEnable);
+            if(mLuaMethodOnEnable != Utils.nil)
+                Utils.CallMethod(mLua, mLuaMethodOnEnable);
         }
 
         void OnDisable() {
             StopAllCoroutines();
 
-            if(mLuaMethodOnDisable != nil)
-                CallMethod(mLuaMethodOnDisable);
+            if(mLuaMethodOnDisable != Utils.nil)
+                Utils.CallMethod(mLua, mLuaMethodOnDisable);
+        }
+
+        void ILuaInitializer.LuaRequire(ILuaState lua) {
+            //common unity libs
+            lua.L_RequireF(Library.UnityObject.LIB_NAME, Library.UnityObject.OpenLib, false);
+            lua.L_RequireF(Library.UnityGameObject.LIB_NAME, Library.UnityGameObject.OpenLib, false);
+            lua.L_RequireF(Library.UnityComponent.LIB_NAME, Library.UnityComponent.OpenLib, false);
+            lua.L_RequireF(Library.UnityBehaviour.LIB_NAME, Library.UnityBehaviour.OpenLib, false);
+            lua.L_RequireF(Library.UnityTransform.LIB_NAME, Library.UnityTransform.OpenLib, false);
+            lua.L_RequireF(Library.UnityCollider.LIB_NAME, Library.UnityCollider.OpenLib, false);
+            lua.L_RequireF(Library.UnityBounds.LIB_NAME, Library.UnityBounds.OpenLib, false);
+            lua.L_RequireF(Library.UnityRigidbody.LIB_NAME, Library.UnityRigidbody.OpenLib, false);
+            lua.L_RequireF(Library.UnityCollision.LIB_NAME, Library.UnityCollision.OpenLib, false);
+
+            //meta-only objects
+            Library.UnityContactPoint.DefineMeta(lua);
+        }
+
+        void ILuaInitializer.LuaPreExecute(ILuaState lua) {
+            //add some variables
+            lua.NewUserData(gameObject);
+            lua.SetMetaTable(Library.UnityGameObject.META_NAME);
+            lua.SetGlobal("gameObject");
+
+            lua.NewUserData(transform);
+            lua.SetMetaTable(Library.UnityTransform.META_NAME);
+            lua.SetGlobal("transform");
+
+            //add some functions
+            lua.PushCSharpFunction(LuaInvoke);
+            lua.SetGlobal("invoke");
+
+            lua.PushCSharpFunction(LuaInvokeRepeat);
+            lua.SetGlobal("invokeRepeat");
+
+            lua.PushCSharpFunction(LuaCancelInvoke);
+            lua.SetGlobal("cancelInvoke");
+
+            lua.PushCSharpFunction(LuaCancelAllInvoke);
+            lua.SetGlobal("cancelAllInvoke");
+        }
+
+        void ILuaInitializer.LuaPostExecute(ILuaState lua) {
+            //grab callbacks from table
+            mAwakeInd = Utils.GetMethod(lua, luaMethodAwake);
+
+            mLuaMethodStart = Utils.GetMethod(lua, luaMethodStart);
+            mLuaMethodOnEnable = Utils.GetMethod(lua, luaMethodOnEnable);
+            mLuaMethodOnDisable = Utils.GetMethod(lua, luaMethodOnDisable);
+            mLuaMethodOnDestroy = Utils.GetMethod(lua, luaMethodOnDestroy);
+
+            mLuaMethodOnSpawned = Utils.GetMethod(lua, luaMethodOnSpawned);
+            mLuaMethodOnDespawned = Utils.GetMethod(lua, luaMethodOnDespawned);
+
+            int updateInd = Utils.GetMethod(lua, luaMethodUpdate);
+            if(updateInd != Utils.nil) {
+                M8.Auxiliary.AuxUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxUpdate>(gameObject);
+                aux.callback += delegate() { Utils.CallMethod(lua, updateInd); };
+            }
+
+            int fixedUpdateInd = Utils.GetMethod(lua, luaMethodFixedUpdate);
+            if(fixedUpdateInd != Utils.nil) {
+                M8.Auxiliary.AuxFixedUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxFixedUpdate>(gameObject);
+                aux.callback += delegate() { Utils.CallMethod(lua, fixedUpdateInd); };
+            }
+
+            int lateUpdateInd = Utils.GetMethod(lua, luaMethodLateUpdate);
+            if(lateUpdateInd != Utils.nil) {
+                M8.Auxiliary.AuxLateUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxLateUpdate>(gameObject);
+                aux.callback += delegate() { Utils.CallMethod(lua, lateUpdateInd); };
+            }
+
+            int triggerEnterInd = Utils.GetMethod(lua, luaMethodTriggerEnter);
+            int triggerStayInd = Utils.GetMethod(lua, luaMethodTriggerStay);
+            int triggerExitInd = Utils.GetMethod(lua, luaMethodTriggerExit);
+            if(triggerEnterInd != Utils.nil || triggerStayInd != Utils.nil || triggerExitInd != Utils.nil) {
+                M8.Auxiliary.AuxTrigger aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxTrigger>(gameObject);
+                if(triggerEnterInd != Utils.nil) aux.enterCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerEnterInd, c, Library.UnityCollider.META_NAME); };
+                if(triggerStayInd != Utils.nil) aux.stayCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerStayInd, c, Library.UnityCollider.META_NAME); };
+                if(triggerExitInd != Utils.nil) aux.exitCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerExitInd, c, Library.UnityCollider.META_NAME); };
+            }
+
+            int collEnterInd = Utils.GetMethod(lua, luaMethodCollisionEnter);
+            int collStayInd = Utils.GetMethod(lua, luaMethodCollisionStay);
+            int collExitInd = Utils.GetMethod(lua, luaMethodCollisionExit);
+            if(collEnterInd != Utils.nil || collStayInd != Utils.nil || collExitInd != Utils.nil) {
+                M8.Auxiliary.AuxCollision aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxCollision>(gameObject);
+                if(collEnterInd != Utils.nil) aux.enterCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collEnterInd, c, Library.UnityCollision.META_NAME); };
+                if(collStayInd != Utils.nil) aux.stayCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collStayInd, c, Library.UnityCollision.META_NAME); };
+                if(collExitInd != Utils.nil) aux.exitCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collExitInd, c, Library.UnityCollision.META_NAME); };
+            }
         }
                 
         void Awake() {
+            //grab lua initializers
+            Component[] comps = GetComponents<Component>();
+            List<ILuaInitializer> inits = new List<ILuaInitializer>(comps.Length);
+            for(int i = 0; i < comps.Length; i++) {
+                ILuaInitializer ilinit = comps[i] as ILuaInitializer;
+                if(ilinit != null)
+                    inits.Add(ilinit);
+            }
+
             //init lua
             mLua = LuaAPI.NewState();
             mLua.L_OpenLibs();
                         
-            //common unity libs
-            mLua.L_RequireF(Library.UnityObject.LIB_NAME, Library.UnityObject.OpenLib, false);
-            mLua.L_RequireF(Library.UnityGameObject.LIB_NAME, Library.UnityGameObject.OpenLib, false);
-            mLua.L_RequireF(Library.UnityComponent.LIB_NAME, Library.UnityComponent.OpenLib, false);
-            mLua.L_RequireF(Library.UnityBehaviour.LIB_NAME, Library.UnityBehaviour.OpenLib, false);
-            mLua.L_RequireF(Library.UnityTransform.LIB_NAME, Library.UnityTransform.OpenLib, false);
-            mLua.L_RequireF(Library.UnityCollider.LIB_NAME, Library.UnityCollider.OpenLib, false);
-            mLua.L_RequireF(Library.UnityBounds.LIB_NAME, Library.UnityBounds.OpenLib, false);
-            mLua.L_RequireF(Library.UnityRigidbody.LIB_NAME, Library.UnityRigidbody.OpenLib, false);
-            mLua.L_RequireF(Library.UnityCollision.LIB_NAME, Library.UnityCollision.OpenLib, false);
-
-            //meta-only objects
-            Library.UnityContactPoint.DefineMeta(mLua);
+            //setup requires
+            for(int i = 0; i < inits.Count; i++)
+                inits[i].LuaRequire(mLua);
 
             mLua.Pop(mLua.GetTop());
             
-            //add some variables
-            mLua.NewUserData(gameObject);
-            mLua.SetMetaTable(Library.UnityGameObject.META_NAME);
-            mLua.SetGlobal("gameObject");
-
-            mLua.NewUserData(transform);
-            mLua.SetMetaTable(Library.UnityTransform.META_NAME);
-            mLua.SetGlobal("transform");
-
-            //add some functions
-            mLua.PushCSharpFunction(LuaInvoke);
-            mLua.SetGlobal("invoke");
-
-            mLua.PushCSharpFunction(LuaInvokeRepeat);
-            mLua.SetGlobal("invokeRepeat");
-
-            mLua.PushCSharpFunction(LuaCancelInvoke);
-            mLua.SetGlobal("cancelInvoke");
-
-            mLua.PushCSharpFunction(LuaCancelAllInvoke);
-            mLua.SetGlobal("cancelAllInvoke");
+            //setup global fields and functions
+            for(int i = 0; i < inits.Count; i++)
+                inits[i].LuaPreExecute(mLua);
             
             //execute
             ThreadStatus status = string.IsNullOrEmpty(scriptPath) ? mLua.L_DoString(scriptText.text) : mLua.L_DoFile(scriptPath);
@@ -135,54 +206,9 @@ namespace M8.Lua {
                 throw new Exception("Lua script's return value is not a table.");
             }
 
-            //grab callbacks from table
-            int awakeInd = GetMethod(luaMethodAwake);
-
-            mLuaMethodStart = GetMethod(luaMethodStart);
-            mLuaMethodOnEnable = GetMethod(luaMethodOnEnable);
-            mLuaMethodOnDisable = GetMethod(luaMethodOnDisable);
-            mLuaMethodOnDestroy = GetMethod(luaMethodOnDestroy);
-
-            mLuaMethodOnSpawned = GetMethod(luaMethodOnSpawned);
-            mLuaMethodOnDespawned = GetMethod(luaMethodOnDespawned);
-
-            int updateInd = GetMethod(luaMethodUpdate);
-            if(updateInd != nil) {
-                M8.Auxiliary.AuxUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxUpdate>(gameObject);
-                aux.callback += delegate() { CallMethod(updateInd); };
-            }
-
-            int fixedUpdateInd = GetMethod(luaMethodFixedUpdate);
-            if(fixedUpdateInd != nil) {
-                M8.Auxiliary.AuxFixedUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxFixedUpdate>(gameObject);
-                aux.callback += delegate() { CallMethod(fixedUpdateInd); };
-            }
-
-            int lateUpdateInd = GetMethod(luaMethodLateUpdate);
-            if(lateUpdateInd != nil) {
-                M8.Auxiliary.AuxLateUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxLateUpdate>(gameObject);
-                aux.callback += delegate() { CallMethod(lateUpdateInd); };
-            }
-
-            int triggerEnterInd = GetMethod(luaMethodTriggerEnter);
-            int triggerStayInd = GetMethod(luaMethodTriggerStay);
-            int triggerExitInd = GetMethod(luaMethodTriggerExit);
-            if(triggerEnterInd != nil || triggerStayInd != nil || triggerExitInd != nil) {
-                M8.Auxiliary.AuxTrigger aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxTrigger>(gameObject);
-                if(triggerEnterInd != nil) aux.enterCallback += delegate(Collider c) { CallMethodCollider(triggerEnterInd, c); };
-                if(triggerStayInd != nil) aux.stayCallback += delegate(Collider c) { CallMethodCollider(triggerStayInd, c); };
-                if(triggerExitInd != nil) aux.exitCallback += delegate(Collider c) { CallMethodCollider(triggerExitInd, c); };
-            }
-
-            int collEnterInd = GetMethod(luaMethodCollisionEnter);
-            int collStayInd = GetMethod(luaMethodCollisionStay);
-            int collExitInd = GetMethod(luaMethodCollisionExit);
-            if(collEnterInd != nil || collStayInd != nil || collExitInd != nil) {
-                M8.Auxiliary.AuxCollision aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxCollision>(gameObject);
-                if(collEnterInd != nil) aux.enterCallback += delegate(Collision c) { CallMethodCollision(collEnterInd, c); };
-                if(collStayInd != nil) aux.stayCallback += delegate(Collision c) { CallMethodCollision(collStayInd, c); };
-                if(collExitInd != nil) aux.exitCallback += delegate(Collision c) { CallMethodCollision(collExitInd, c); };
-            }
+            //additional setups
+            for(int i = 0; i < inits.Count; i++)
+                inits[i].LuaPostExecute(mLua);
                         
             /*mLua.CreateTable(0, 2);
             mLua.PushLightUserData(gameObject);
@@ -191,8 +217,8 @@ namespace M8.Lua {
             mLua.SetField(-2, "name");*/
                                                                         
             //awake
-            if(awakeInd != nil)
-                CallMethod(awakeInd);
+            if(mAwakeInd != Utils.nil)
+                Utils.CallMethod(mLua, mAwakeInd);
         }
 
         /*static int goname(ILuaState l) {
@@ -211,119 +237,12 @@ namespace M8.Lua {
 
         // Use this for initialization
         void Start() {
-            if(mLuaMethodStart != nil)
-                CallMethod(mLuaMethodStart);
+            if(mLuaMethodStart != Utils.nil)
+                Utils.CallMethod(mLua, mLuaMethodStart);
         }
 
         //Internal
-
-        /// <summary>
-        /// Returns LuaType.LUA_TNIL if method is not found.
-        /// </summary>
-        private int GetMethod(string name) {
-            mLua.GetField(-1, name);
-            if(!mLua.IsFunction(-1)) {
-                mLua.Pop(1);
-                return nil;
-            }
-
-            return mLua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
-        }
-
-        private void CallMethod(int funcRef) {
-            mLua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
-
-#if MATE_LUA_TRACE
-            // insert `traceback' function
-            var b = mLua.GetTop();
-            mLua.PushCSharpFunction(Traceback);
-            mLua.Insert(b);
-
-            var status = mLua.PCall(0, 0, b);
-#else
-            var status = mLua.PCall(0, 0, 0);
-#endif
-            if(status != ThreadStatus.LUA_OK) {
-                Debug.LogError(mLua.ToString(-1));
-            }
-
-#if MATE_LUA_TRACE
-            // remove `traceback' function
-            mLua.Remove(b);
-#endif
-        }
-
-        private void CallMethodCollider(int funcRef, Collider c) {
-            mLua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
-
-#if MATE_LUA_TRACE
-            // insert `traceback' function
-            var b = mLua.GetTop();
-            mLua.PushCSharpFunction(Traceback);
-            mLua.Insert(b);
-#endif
-
-            mLua.NewUserData(c);
-            mLua.SetMetaTable(Library.UnityCollider.META_NAME);
-
-#if MATE_LUA_TRACE
-            var status = mLua.PCall(1, 0, b);
-#else
-            var status = mLua.PCall(1, 0, 0);
-#endif
-            if(status != ThreadStatus.LUA_OK) {
-                Debug.LogError(mLua.ToString(-1));
-            }
-
-#if MATE_LUA_TRACE
-            // remove `traceback' function
-            mLua.Remove(b);
-#endif
-        }
-
-        private void CallMethodCollision(int funcRef, Collision c) {
-            mLua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
-
-#if MATE_LUA_TRACE
-            // insert `traceback' function
-            var b = mLua.GetTop();
-            mLua.PushCSharpFunction(Traceback);
-            mLua.Insert(b);
-#endif
-
-            mLua.NewUserData(c);
-            mLua.SetMetaTable(Library.UnityCollision.META_NAME);
-
-#if MATE_LUA_TRACE
-            var status = mLua.PCall(1, 0, b);
-#else
-            var status = mLua.PCall(1, 0, 0);
-#endif
-            if(status != ThreadStatus.LUA_OK) {
-                Debug.LogError(mLua.ToString(-1));
-            }
-
-#if MATE_LUA_TRACE
-            // remove `traceback' function
-            mLua.Remove(b);
-#endif
-        }
-
-        private static int Traceback(ILuaState lua) {
-            var msg = lua.ToString(1);
-            if(msg != null) {
-                lua.L_Traceback(lua, msg, 1);
-            }
-            // is there an error object?
-            else if(!lua.IsNoneOrNil(1)) {
-                // try its `tostring' metamethod
-                if(!lua.L_CallMeta(1, "__tostring")) {
-                    lua.PushString("(no error message)");
-                }
-            }
-            return 1;
-        }
-
+        
         private int GetFuncRef(ILuaState lua, int ind) {
             int funcRef = 0;
 

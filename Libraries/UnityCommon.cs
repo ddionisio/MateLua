@@ -24,7 +24,8 @@ namespace M8.Lua.Library {
                     new NameFuncPair("Instantiate", Instantiate),
                 };
 
-            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            lua.L_NewLib(l_funcs);
 
             return 1;
         }
@@ -116,7 +117,8 @@ namespace M8.Lua.Library {
                     new NameFuncPair("FindGameObjectWithTag", FindGameObjectWithTag),
                 };
 
-            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            lua.L_NewLib(l_funcs);
 
             return 1;
         }
@@ -293,7 +295,7 @@ namespace M8.Lua.Library {
                         go.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
-                        object o = lua.ToUserData(3); Container c = o as Container;
+                        object o = lua.ToUserData(3); IContainer c = o as IContainer;
                         if(c != null) go.SendMessage(method, c.data, SendMessageOptions.DontRequireReceiver);
                         else go.SendMessage(method, o, SendMessageOptions.DontRequireReceiver);
                         break;
@@ -332,7 +334,7 @@ namespace M8.Lua.Library {
                         go.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
-                        object o = lua.ToUserData(3); Container c = o as Container;
+                        object o = lua.ToUserData(3); IContainer c = o as IContainer;
                         if(c != null) go.SendMessageUpwards(method, c.data, SendMessageOptions.DontRequireReceiver);
                         else go.SendMessageUpwards(method, o, SendMessageOptions.DontRequireReceiver);
                         break;
@@ -371,7 +373,7 @@ namespace M8.Lua.Library {
                         go.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
-                        object o = lua.ToUserData(3); Container c = o as Container;
+                        object o = lua.ToUserData(3); IContainer c = o as IContainer;
                         if(c != null) go.BroadcastMessage(method, c.data, SendMessageOptions.DontRequireReceiver);
                         else go.BroadcastMessage(method, o, SendMessageOptions.DontRequireReceiver);
                         break;
@@ -417,7 +419,8 @@ namespace M8.Lua.Library {
                 l_funcs = new NameFuncPair[] {
                 };
 
-            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            lua.L_NewLib(l_funcs);
 
             return 1;
         }
@@ -536,7 +539,7 @@ namespace M8.Lua.Library {
                         comp.SendMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
-                        object o = lua.ToUserData(3); Container c = o as Container;
+                        object o = lua.ToUserData(3); IContainer c = o as IContainer;
                         if(c != null) comp.SendMessage(method, c.data, SendMessageOptions.DontRequireReceiver);
                         else comp.SendMessage(method, o, SendMessageOptions.DontRequireReceiver);
                         break;
@@ -572,7 +575,7 @@ namespace M8.Lua.Library {
                         comp.SendMessageUpwards(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
-                        object o = lua.ToUserData(3); Container c = o as Container;
+                        object o = lua.ToUserData(3); IContainer c = o as IContainer;
                         if(c != null) comp.SendMessageUpwards(method, c.data, SendMessageOptions.DontRequireReceiver);
                         else comp.SendMessageUpwards(method, o, SendMessageOptions.DontRequireReceiver);
                         break;
@@ -611,7 +614,7 @@ namespace M8.Lua.Library {
                         comp.BroadcastMessage(method, lua.ToInteger(3), SendMessageOptions.DontRequireReceiver);
                         break;
                     case LuaType.LUA_TUSERDATA:
-                        object o = lua.ToUserData(3); Container c = o as Container;
+                        object o = lua.ToUserData(3); IContainer c = o as IContainer;
                         if(c != null) comp.BroadcastMessage(method, c.data, SendMessageOptions.DontRequireReceiver);
                         else comp.BroadcastMessage(method, o, SendMessageOptions.DontRequireReceiver);
                         break;
@@ -657,7 +660,8 @@ namespace M8.Lua.Library {
                 l_funcs = new NameFuncPair[] {
                 };
 
-            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            lua.L_NewLib(l_funcs);
 
             return 1;
         }

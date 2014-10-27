@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 using UniLua;
 
@@ -23,7 +22,8 @@ namespace M8.Lua.Library {
                 l_funcs = new NameFuncPair[] {
                 };
 
-            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            lua.L_NewLib(l_funcs);
                         
             return 1;
         }

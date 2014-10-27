@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 using UniLua;
 
@@ -34,7 +33,8 @@ namespace M8.Lua.Library {
                     new NameFuncPair("Cast", Cast),
                 };
 
-            Utils.NewLibMetaGetterSetter(lua, META_NAME, m_funcs, l_funcs);
+            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            lua.L_NewLib(l_funcs);
 
             return 1;
         }
@@ -108,11 +108,17 @@ namespace M8.Lua.Library {
             return 3;
         }
 
+        /// <summary>
+        /// bool, RaycastHit = coll:Raycast(pt = {x, y, z}, dir = {x, y, z}, dist)
+        /// </summary>
         private static int Raycast(ILuaState lua) {
-            lua.L_Error("Not Implemented");
-            //Collider coll = Utils.CheckUnityObject<Collider>(lua, 1);
-            //TODO: need RaycastHit
-            return 0;
+            Collider coll = Utils.CheckUnityObject<Collider>(lua, 1);
+            Ray ray = new Ray(Utils.TableToVector3(lua, 2), Utils.TableToVector3(lua, 3));
+            RaycastHit hit;
+            lua.PushBoolean(coll.Raycast(ray, out hit, (float)lua.L_CheckNumber(4)));
+            lua.NewUserData(hit);
+            lua.SetMetaTable(UnityRaycastHit.META_NAME);
+            return 2;
         }
     }
 }
