@@ -4,7 +4,6 @@ using UniLua;
 
 namespace M8.Lua.Library {
     public static class UnityCollider {
-        public const string META_NAME = "Unity.Collider.Meta";
         public const string LIB_NAME = "Unity.Collider";
 
         private static NameFuncPair[] m_funcs = null;
@@ -30,10 +29,9 @@ namespace M8.Lua.Library {
                 };
             if(l_funcs == null)
                 l_funcs = new NameFuncPair[] {
-                    new NameFuncPair("Cast", Cast),
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(Collider), m_funcs);
             lua.L_NewLib(l_funcs);
 
             return 1;
@@ -42,18 +40,12 @@ namespace M8.Lua.Library {
         public static void Push(ILuaState lua, Collider coll) {
             if(coll) {
                 lua.NewUserData(coll);
-                lua.SetMetaTable(META_NAME);
+                Utils.SetMetaTableByType(lua, typeof(Collider));
             }
             else //null given,
                 lua.PushNil();
         }
-
-        private static int Cast(ILuaState lua) {
-            lua.NewUserData(Utils.CheckUnityObject<Collider>(lua, 1));
-            lua.SetMetaTable(META_NAME);
-            return 1;
-        }
-
+        
         private static int Get(ILuaState lua) {
             Collider coll = Utils.CheckUnityObject<Collider>(lua, 1);
             string field = lua.L_CheckString(2);
@@ -66,7 +58,7 @@ namespace M8.Lua.Library {
                     break;
                 case "bounds":
                     lua.NewUserData(new UnityBounds(coll.bounds));
-                    lua.SetMetaTable(UnityBounds.META_NAME);
+                    Utils.SetMetaTableByType(lua, typeof(UnityBounds));
                     break;
                 case "attachedRigidbody":
                     UnityRigidbody.Push(lua, coll.attachedRigidbody);
@@ -116,8 +108,7 @@ namespace M8.Lua.Library {
             Ray ray = new Ray(Utils.TableToVector3(lua, 2), Utils.TableToVector3(lua, 3));
             RaycastHit hit;
             lua.PushBoolean(coll.Raycast(ray, out hit, (float)lua.L_CheckNumber(4)));
-            lua.NewUserData(hit);
-            lua.SetMetaTable(UnityRaycastHit.META_NAME);
+            UnityRaycastHit.Push(lua, hit);
             return 2;
         }
     }

@@ -11,6 +11,22 @@ namespace M8.Lua {
         public const string GETTER = "get";
         public const string SETTER = "set";
 
+        public static string GetMetaName(System.Type type) {
+            return type.ToString()+".meta";
+        }
+
+        public static string GetMetaName(string typeName) {
+            return typeName+".meta";
+        }
+
+        public static void SetMetaTableByType(ILuaState lua, System.Type type) {
+            lua.SetMetaTable(GetMetaName(type));
+        }
+
+        public static void SetMetaTableByType(ILuaState lua, string typeName) {
+            lua.SetMetaTable(GetMetaName(typeName));
+        }
+
         public static T CheckUnityObject<T>(ILuaState lua, int ind) where T : Object {
             T obj = lua.ToUserData(ind) as T;
             if(obj == null)
@@ -18,8 +34,8 @@ namespace M8.Lua {
             return obj;
         }
 
-        public static void NewMeta(ILuaState lua, string metaName, NameFuncPair[] metaFuncs) {
-            lua.NewMetaTable(metaName);
+        public static void NewMeta(ILuaState lua, System.Type type, NameFuncPair[] metaFuncs) {
+            lua.NewMetaTable(GetMetaName(type));
 
             lua.PushString("__index");
             lua.PushValue(-2); //meta
@@ -28,8 +44,8 @@ namespace M8.Lua {
             lua.L_SetFuncs(metaFuncs, 0);
         }
 
-        public static void NewMetaGetterSetter(ILuaState lua, string metaName, NameFuncPair[] metaFuncs) {
-            lua.NewMetaTable(metaName);
+        public static void NewMetaGetterSetter(ILuaState lua, System.Type type, NameFuncPair[] metaFuncs) {
+            lua.NewMetaTable(GetMetaName(type));
             lua.L_SetFuncs(metaFuncs, 0);
 
             lua.PushString("__index");
@@ -81,7 +97,7 @@ namespace M8.Lua {
 #endif
         }
 
-        public static void CallMethod<T>(ILuaState lua, int funcRef, T objArg, string metaRef) {
+        public static void CallMethod<T>(ILuaState lua, int funcRef, T objArg) {
             lua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
 
 #if MATE_LUA_TRACE
@@ -92,7 +108,7 @@ namespace M8.Lua {
 #endif
 
             lua.NewUserData(objArg);
-            if(!string.IsNullOrEmpty(metaRef)) lua.SetMetaTable(metaRef);
+            SetMetaTableByType(lua, typeof(T));
 
 #if MATE_LUA_TRACE
             var status = lua.PCall(1, 0, b);

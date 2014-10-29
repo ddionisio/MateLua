@@ -6,7 +6,6 @@ using UniLua;
 namespace M8.Lua.Library {
 #region Object
     public static class UnityObject {
-        public const string META_NAME = "Unity.Object.Meta";
         public const string LIB_NAME = "Unity.Object";
 
         private static NameFuncPair[] m_funcs = null;
@@ -24,7 +23,7 @@ namespace M8.Lua.Library {
                     new NameFuncPair("Instantiate", Instantiate),
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(Object), m_funcs);
             lua.L_NewLib(l_funcs);
 
             return 1;
@@ -55,7 +54,8 @@ namespace M8.Lua.Library {
 
         private static int Cast(ILuaState lua) {
             lua.NewUserData(Utils.CheckUnityObject<Object>(lua, 1));
-            lua.SetMetaTable(META_NAME);
+            string typename = lua.L_CheckString(2);
+            Utils.SetMetaTableByType(lua, typename);
             return 1;
         }
 
@@ -63,7 +63,7 @@ namespace M8.Lua.Library {
             Object o = Utils.CheckUnityObject<Object>(lua, 1);
             Object newObj = Object.Instantiate(o);
             lua.NewUserData(newObj);
-            lua.SetMetaTable(META_NAME);
+            Utils.SetMetaTableByType(lua, newObj.GetType());
             return 1;
         }
 
@@ -88,7 +88,6 @@ namespace M8.Lua.Library {
 
 #region GameObject
     public static class UnityGameObject {
-        public const string META_NAME = "Unity.GameObject.Meta";
         public const string LIB_NAME = "Unity.GameObject";
 
         private static NameFuncPair[] m_funcs = null;
@@ -117,7 +116,7 @@ namespace M8.Lua.Library {
                     new NameFuncPair("FindGameObjectWithTag", FindGameObjectWithTag),
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(GameObject), m_funcs);
             lua.L_NewLib(l_funcs);
 
             return 1;
@@ -126,7 +125,7 @@ namespace M8.Lua.Library {
         public static void Push(ILuaState lua, GameObject go) {
             if(go) {
                 lua.NewUserData(go);
-                lua.SetMetaTable(META_NAME);
+                Utils.SetMetaTableByType(lua, go.GetType());
             }
             else
                 lua.PushNil();
@@ -394,7 +393,6 @@ namespace M8.Lua.Library {
 
 #region Component
     public static class UnityComponent {
-        public const string META_NAME = "Unity.Component.Meta";
         public const string LIB_NAME = "Unity.Component";
 
         private static NameFuncPair[] m_funcs = null;
@@ -419,7 +417,7 @@ namespace M8.Lua.Library {
                 l_funcs = new NameFuncPair[] {
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(Component), m_funcs);
             lua.L_NewLib(l_funcs);
 
             return 1;
@@ -428,7 +426,7 @@ namespace M8.Lua.Library {
         public static void Push(ILuaState lua, Component c) {
             if(c) {
                 lua.NewUserData(c);
-                lua.SetMetaTable(META_NAME);
+                Utils.SetMetaTableByType(lua, c.GetType());
             }
             else //null given,
                 lua.PushNil();
@@ -635,7 +633,6 @@ namespace M8.Lua.Library {
 
 #region Behaviour
     public static class UnityBehaviour {
-        public const string META_NAME = "Unity.Behaviour.Meta";
         public const string LIB_NAME = "Unity.Behaviour";
 
         private static NameFuncPair[] m_funcs = null;
@@ -660,7 +657,7 @@ namespace M8.Lua.Library {
                 l_funcs = new NameFuncPair[] {
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(Behaviour), m_funcs);
             lua.L_NewLib(l_funcs);
 
             return 1;

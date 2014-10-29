@@ -7,7 +7,6 @@ namespace M8.Lua.Library {
     /// Used as a wrapper for Bounds
     /// </summary>
     public class UnityBounds : IContainer {
-        public const string META_NAME = "Unity.Bounds.Meta";
         public const string LIB_NAME = "Unity.Bounds";
 
         private static NameFuncPair[] m_funcs = null;
@@ -41,7 +40,7 @@ namespace M8.Lua.Library {
                     new NameFuncPair("New", New),
                 };
 
-            Utils.NewMeta(lua, META_NAME, m_funcs);
+            Utils.NewMeta(lua, typeof(UnityBounds), m_funcs);
             lua.L_NewLib(l_funcs);
             return 1;
         }
@@ -49,7 +48,7 @@ namespace M8.Lua.Library {
         private static int New(ILuaState lua) {
             UnityBounds b = new UnityBounds(new Bounds(Vector3.zero, Vector3.zero));
             lua.NewUserData(b);
-            lua.SetMetaTable(META_NAME);
+            Utils.SetMetaTableByType(lua, typeof(UnityBounds));
             return 1;
         }
 

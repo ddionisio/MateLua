@@ -5,7 +5,6 @@ using UniLua;
 
 namespace M8.Lua.Library {
     public static class UnityTransform {
-        public const string META_NAME = "Unity.Transform.Meta";
         public const string LIB_NAME = "Unity.Transform";
 
         private static NameFuncPair[] m_funcs = null;
@@ -67,10 +66,9 @@ namespace M8.Lua.Library {
                 };
             if(l_funcs == null)
                 l_funcs = new NameFuncPair[] {
-                    new NameFuncPair("Cast", Cast),
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(Transform), m_funcs);
             lua.L_NewLib(l_funcs);
 
             return 1;
@@ -79,16 +77,10 @@ namespace M8.Lua.Library {
         public static void Push(ILuaState lua, Transform c) {
             if(c) {
                 lua.NewUserData(c);
-                lua.SetMetaTable(META_NAME);
+                Utils.SetMetaTableByType(lua, c.GetType());
             }
             else //null given,
                 lua.PushNil();
-        }
-
-        private static int Cast(ILuaState lua) {
-            lua.NewUserData(Utils.CheckUnityObject<Transform>(lua, 1));
-            lua.SetMetaTable(META_NAME);
-            return 1;
         }
 
         private static int Get(ILuaState lua) {
@@ -98,12 +90,7 @@ namespace M8.Lua.Library {
                 switch(field) {
                     case "parent":
                         Transform parent = t.parent;
-                        if(parent) {
-                            lua.NewUserData(parent);
-                            lua.SetMetaTable(META_NAME);
-                        }
-                        else
-                            lua.PushNil();
+                        Push(lua, parent);
                         break;
                     case "childCount":
                         lua.PushInteger(t.childCount);
@@ -146,8 +133,7 @@ namespace M8.Lua.Library {
             Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
             string path = lua.L_CheckString(2);
             Transform c = t.Find(path);
-            if(c) { lua.NewUserData(c); lua.SetMetaTable(META_NAME); }
-            else lua.PushNil();
+            Push(lua, c);
             return 1;
         }
 
@@ -161,8 +147,7 @@ namespace M8.Lua.Library {
             Transform t = Utils.CheckUnityObject<Transform>(lua, 1);
             int ind = lua.L_CheckInteger(2);
             Transform c = t.GetChild(ind);
-            if(c) { lua.NewUserData(c); lua.SetMetaTable(META_NAME); }
-            else lua.PushNil();
+            Push(lua, c);
             return 1;
         }
 

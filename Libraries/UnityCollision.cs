@@ -22,7 +22,7 @@ namespace M8.Lua.Library {
                 l_funcs = new NameFuncPair[] {
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(Collision), m_funcs);
             lua.L_NewLib(l_funcs);
                         
             return 1;
@@ -35,7 +35,7 @@ namespace M8.Lua.Library {
             string field = lua.L_CheckString(2);
             switch(field) {
                 case "collider":
-                    if(coll.collider) { lua.NewUserData(coll.collider); lua.SetMetaTable(UnityCollider.META_NAME); }
+                    if(coll.collider) { lua.NewUserData(coll.collider); Utils.SetMetaTableByType(lua, typeof(Collider)); }
                     else lua.PushNil();
                     break;
                 case "contacts":
@@ -48,16 +48,13 @@ namespace M8.Lua.Library {
                     }
                     break;
                 case "gameObject":
-                    if(coll.gameObject) { lua.NewUserData(coll.gameObject); lua.SetMetaTable(UnityGameObject.META_NAME); }
-                    else lua.PushNil();
+                    UnityGameObject.Push(lua, coll.gameObject);
                     break;
                 case "rigidbody":
-                    if(coll.rigidbody) { lua.NewUserData(coll.rigidbody); lua.SetMetaTable(UnityRigidbody.META_NAME); }
-                    else lua.PushNil();
+                    UnityRigidbody.Push(lua, coll.rigidbody);
                     break;
                 case "transform":
-                    if(coll.transform) { lua.NewUserData(coll.transform); lua.SetMetaTable(UnityTransform.META_NAME); }
-                    else lua.PushNil();
+                    UnityTransform.Push(lua, coll.transform);
                     break;
                 default:
                     if(!lua.L_GetMetaField(1, field))
@@ -99,7 +96,7 @@ namespace M8.Lua.Library {
                     new NameFuncPair("getPoint", GetPoint),
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(ContactPoint), m_funcs);
         }
 
         private static int Get(ILuaState lua) {
@@ -109,12 +106,10 @@ namespace M8.Lua.Library {
                 string field = lua.L_CheckString(2);
                 switch(field) {
                     case "otherCollider":
-                        if(cp.otherCollider) { lua.NewUserData(cp.otherCollider); lua.SetMetaTable(UnityCollider.META_NAME); }
-                        else lua.PushNil();
+                        UnityCollider.Push(lua, cp.otherCollider);
                         break;
                     case "thisCollider":
-                        if(cp.thisCollider) { lua.NewUserData(cp.thisCollider); lua.SetMetaTable(UnityCollider.META_NAME); }
-                        else lua.PushNil();
+                        UnityCollider.Push(lua, cp.thisCollider);
                         break;
                     default:
                         if(!lua.L_GetMetaField(1, field))

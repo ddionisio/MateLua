@@ -84,6 +84,7 @@ namespace M8.Lua {
         void ILuaInitializer.LuaRequire(ILuaState lua) {
             //common unity libs
             lua.L_RequireF(Library.UnityObject.LIB_NAME, Library.UnityObject.OpenLib, false);
+            lua.L_RequireF(Library.UnityTime.LIB_NAME, Library.UnityTime.OpenLib, false);
             lua.L_RequireF(Library.UnityGameObject.LIB_NAME, Library.UnityGameObject.OpenLib, false);
             lua.L_RequireF(Library.UnityComponent.LIB_NAME, Library.UnityComponent.OpenLib, false);
             lua.L_RequireF(Library.UnityBehaviour.LIB_NAME, Library.UnityBehaviour.OpenLib, false);
@@ -99,12 +100,10 @@ namespace M8.Lua {
 
         void ILuaInitializer.LuaPreExecute(ILuaState lua) {
             //add some variables
-            lua.NewUserData(gameObject);
-            lua.SetMetaTable(Library.UnityGameObject.META_NAME);
+            Library.UnityGameObject.Push(lua, gameObject);
             lua.SetGlobal("gameObject");
 
-            lua.NewUserData(transform);
-            lua.SetMetaTable(Library.UnityTransform.META_NAME);
+            Library.UnityTransform.Push(lua, transform);
             lua.SetGlobal("transform");
 
             //add some functions
@@ -156,9 +155,9 @@ namespace M8.Lua {
             int triggerExitInd = Utils.GetMethod(lua, luaMethodTriggerExit);
             if(triggerEnterInd != Utils.nil || triggerStayInd != Utils.nil || triggerExitInd != Utils.nil) {
                 M8.Auxiliary.AuxTrigger aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxTrigger>(gameObject);
-                if(triggerEnterInd != Utils.nil) aux.enterCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerEnterInd, c, Library.UnityCollider.META_NAME); };
-                if(triggerStayInd != Utils.nil) aux.stayCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerStayInd, c, Library.UnityCollider.META_NAME); };
-                if(triggerExitInd != Utils.nil) aux.exitCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerExitInd, c, Library.UnityCollider.META_NAME); };
+                if(triggerEnterInd != Utils.nil) aux.enterCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerEnterInd, c); };
+                if(triggerStayInd != Utils.nil) aux.stayCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerStayInd, c); };
+                if(triggerExitInd != Utils.nil) aux.exitCallback += delegate(Collider c) { Utils.CallMethod<Collider>(lua, triggerExitInd, c); };
             }
 
             int collEnterInd = Utils.GetMethod(lua, luaMethodCollisionEnter);
@@ -166,9 +165,9 @@ namespace M8.Lua {
             int collExitInd = Utils.GetMethod(lua, luaMethodCollisionExit);
             if(collEnterInd != Utils.nil || collStayInd != Utils.nil || collExitInd != Utils.nil) {
                 M8.Auxiliary.AuxCollision aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxCollision>(gameObject);
-                if(collEnterInd != Utils.nil) aux.enterCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collEnterInd, c, Library.UnityCollision.META_NAME); };
-                if(collStayInd != Utils.nil) aux.stayCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collStayInd, c, Library.UnityCollision.META_NAME); };
-                if(collExitInd != Utils.nil) aux.exitCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collExitInd, c, Library.UnityCollision.META_NAME); };
+                if(collEnterInd != Utils.nil) aux.enterCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collEnterInd, c); };
+                if(collStayInd != Utils.nil) aux.stayCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collStayInd, c); };
+                if(collExitInd != Utils.nil) aux.exitCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collExitInd, c); };
             }
         }
                 

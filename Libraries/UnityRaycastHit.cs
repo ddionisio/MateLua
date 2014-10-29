@@ -4,8 +4,6 @@ using UniLua;
 
 namespace M8.Lua.Library {
     public static class UnityRaycastHit {
-        public const string META_NAME = "Unity.RaycastHit.Meta";
-
         private static NameFuncPair[] m_funcs = null;
 
         public static void DefineMeta(ILuaState lua) {
@@ -22,7 +20,12 @@ namespace M8.Lua.Library {
                     new NameFuncPair("getTextureCoord2", GetTextureCoord2),
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(RaycastHit), m_funcs);
+        }
+
+        public static void Push(ILuaState lua, RaycastHit hit) {
+            lua.NewUserData(hit);
+            Utils.SetMetaTableByType(lua, hit.GetType());
         }
 
         private static int Get(ILuaState lua) {
@@ -32,31 +35,16 @@ namespace M8.Lua.Library {
                 string field = lua.L_CheckString(2);
                 switch(field) {
                     case "collider":
-                        if(hit.collider) {
-                            lua.NewUserData(hit.collider);
-                            lua.SetMetaTable(UnityCollider.META_NAME);
-                        }
-                        else
-                            lua.PushNil();
+                        UnityCollider.Push(lua, hit.collider);
                         break;
                     case "distance":
                         lua.PushNumber(hit.distance);
                         break;
                     case "rigidbody":
-                        if(hit.rigidbody) {
-                            lua.NewUserData(hit.rigidbody);
-                            lua.SetMetaTable(UnityRigidbody.META_NAME);
-                        }
-                        else
-                            lua.PushNil();
+                        UnityRigidbody.Push(lua, hit.rigidbody);
                         break;
                     case "transform":
-                        if(hit.transform) {
-                            lua.NewUserData(hit.transform);
-                            lua.SetMetaTable(UnityTransform.META_NAME);
-                        }
-                        else
-                            lua.PushNil();
+                        UnityTransform.Push(lua, hit.transform);
                         break;
                     case "triangleIndex":
                         lua.PushInteger(hit.triangleIndex);

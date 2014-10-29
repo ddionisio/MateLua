@@ -5,7 +5,6 @@ using UniLua;
 
 namespace M8.Lua.Library {
     public static class UnityRigidbody {
-        public const string META_NAME = "Unity.Rigidbody.Meta";
         public const string LIB_NAME = "Unity.Rigidbody";
 
         private static NameFuncPair[] m_funcs = null;
@@ -28,10 +27,9 @@ namespace M8.Lua.Library {
                 };
             if(l_funcs == null)
                 l_funcs = new NameFuncPair[] {
-                    new NameFuncPair("Cast", Cast),
                 };
 
-            Utils.NewMetaGetterSetter(lua, META_NAME, m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(Rigidbody), m_funcs);
             lua.L_NewLib(l_funcs);
 
             return 1;
@@ -40,16 +38,10 @@ namespace M8.Lua.Library {
         public static void Push(ILuaState lua, Rigidbody body) {
             if(body) {
                 lua.NewUserData(body);
-                lua.SetMetaTable(META_NAME);
+                Utils.SetMetaTableByType(lua, body.GetType());
             }
             else //null given,
                 lua.PushNil();
-        }
-
-        private static int Cast(ILuaState lua) {
-            lua.NewUserData(Utils.CheckUnityObject<Rigidbody>(lua, 1));
-            lua.SetMetaTable(META_NAME);
-            return 1;
         }
 
         private static int Get(ILuaState lua) {
