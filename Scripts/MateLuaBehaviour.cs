@@ -15,6 +15,7 @@ namespace M8.Lua {
         [System.Serializable]
         public struct Include {
             public bool input; //set true to enable input
+            public bool sceneManager;
         }
 
         public Include include;
@@ -40,6 +41,7 @@ namespace M8.Lua {
             mLua = lua;
 
             if(include.input) lua.L_RequireF(Library.MateInput.LIB_NAME, Library.MateInput.OpenLib, false);
+            if(include.sceneManager) lua.L_RequireF(Library.MateSceneMgr.LIB_NAME, Library.MateSceneMgr.OpenLib, false);
         }
 
         void ILuaInitializer.LuaPreExecute(ILuaState lua) {

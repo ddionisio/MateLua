@@ -110,11 +110,9 @@ namespace M8.Lua.Library {
         private static int RemoveButtonCall(ILuaState lua) {
             InputManager input = InputManager.instance;
             if(input) {
-                int player = lua.L_CheckInteger(1);
-                string action = lua.L_CheckString(2);
-                InputManager.OnButton call = lua.ToUserData(3) as InputManager.OnButton;
+                InputManager.OnButton call = lua.ToUserData(1) as InputManager.OnButton;
                 if(call != null)
-                    input.RemoveButtonCall(player, action, call);
+                    input.RemoveButtonCall(call);
                 else
                     lua.L_ArgError(1, "Not a delegate: InputManager.OnButton");
             }
