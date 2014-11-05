@@ -1,6 +1,4 @@
-﻿#define MATE_LUA_TRACE
-
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -27,11 +25,7 @@ namespace M8.Lua {
         private const string luaMethodCollisionEnter = "onCollisionEnter";
         private const string luaMethodCollisionStay = "onCollisionStay";
         private const string luaMethodCollisionExit = "onCollisionExit";
-
-        //mate
-        private const string luaMethodOnSpawned = "onSpawned";
-        private const string luaMethodOnDespawned = "onDespawned";
-                
+                        
         public string scriptPath; //path to lua file
         public TextAsset scriptText; //if code path is empty, use this for loading
 
@@ -43,25 +37,9 @@ namespace M8.Lua {
         private int mLuaMethodOnEnable;
         private int mLuaMethodOnDisable;
         private int mLuaMethodOnDestroy;
-
-        //mate stuff
-        private int mLuaMethodOnSpawned;
-        private int mLuaMethodOnDespawned;
-                
+                        
         public ILuaState lua { get { return mLua; } }
-
-        //Mate Calls
-
-        void OnSpawned() {
-            if(mLuaMethodOnSpawned != Utils.nil)
-                Utils.CallMethod(mLua, mLuaMethodOnSpawned);
-        }
-
-        void OnDespawned() {
-            if(mLuaMethodOnDespawned != Utils.nil)
-                Utils.CallMethod(mLua, mLuaMethodOnDespawned);
-        }
-
+                
         //Unity Calls
                 
         void OnDestroy() {
@@ -128,10 +106,7 @@ namespace M8.Lua {
             mLuaMethodOnEnable = Utils.GetMethod(lua, luaMethodOnEnable);
             mLuaMethodOnDisable = Utils.GetMethod(lua, luaMethodOnDisable);
             mLuaMethodOnDestroy = Utils.GetMethod(lua, luaMethodOnDestroy);
-
-            mLuaMethodOnSpawned = Utils.GetMethod(lua, luaMethodOnSpawned);
-            mLuaMethodOnDespawned = Utils.GetMethod(lua, luaMethodOnDespawned);
-
+                        
             int updateInd = Utils.GetMethod(lua, luaMethodUpdate);
             if(updateInd != Utils.nil) {
                 M8.Auxiliary.AuxUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxUpdate>(gameObject);
@@ -242,32 +217,9 @@ namespace M8.Lua {
 
         //Internal
         
-        private int GetFuncRef(ILuaState lua, int ind) {
-            int funcRef = 0;
-
-            if(lua.IsFunction(ind)) {
-                lua.PushValue(ind);
-                funcRef = lua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
-            }
-            else if(lua.IsString(ind)) {
-                string f = lua.ToString(ind);
-                lua.GetGlobal(f);
-                if(lua.IsFunction(-1))
-                    funcRef = lua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
-                else {
-                    lua.Pop(1);
-                    lua.L_ArgError(ind, "Function not found: "+f);
-                }
-            }
-            else
-                lua.L_ArgError(ind, "Argument is not a function or string.");
-
-            return funcRef;
-        }
-                
         private int LuaInvoke(ILuaState lua) {
 
-            int funcRef = GetFuncRef(lua, 1);
+            int funcRef = Utils.GetFuncRef(lua, 1);
             if(funcRef == 0) return 0;
                
             float time = (float)lua.L_CheckNumber(2);
@@ -284,7 +236,7 @@ namespace M8.Lua {
 
         private int LuaInvokeRepeat(ILuaState lua) {
 
-            int funcRef = GetFuncRef(lua, 1);
+            int funcRef = Utils.GetFuncRef(lua, 1);
             if(funcRef == 0) return 0;
 
             float time = (float)lua.L_CheckNumber(2);

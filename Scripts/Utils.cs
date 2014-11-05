@@ -161,5 +161,28 @@ namespace M8.Lua {
 
             return ret;
         }
+
+        public static int GetFuncRef(ILuaState lua, int ind) {
+            int funcRef = 0;
+
+            if(lua.IsFunction(ind)) {
+                lua.PushValue(ind);
+                funcRef = lua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
+            }
+            else if(lua.IsString(ind)) {
+                string f = lua.ToString(ind);
+                lua.GetGlobal(f);
+                if(lua.IsFunction(-1))
+                    funcRef = lua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
+                else {
+                    lua.Pop(1);
+                    lua.L_ArgError(ind, "Function not found: "+f);
+                }
+            }
+            else
+                lua.L_ArgError(ind, "Argument is not a function or string.");
+
+            return funcRef;
+        }
     }
 }
