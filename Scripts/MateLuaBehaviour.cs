@@ -18,6 +18,7 @@ namespace M8.Lua {
             public bool sceneManager;
             public bool sceneState;
             public bool audio;
+            public bool entity;
         }
 
         public Include include;
@@ -53,6 +54,7 @@ namespace M8.Lua {
                 lua.L_RequireF(Library.MateSoundGlobal.LIB_NAME, Library.MateSoundGlobal.OpenLib, false);
                 lua.L_RequireF(Library.MateSound.LIB_NAME, Library.MateSound.OpenLib, false);
             }
+            if(include.entity) lua.L_RequireF(Library.MateEntity.LIB_NAME, Library.MateEntity.OpenLib, false);
         }
 
         void ILuaInitializer.LuaPreExecute(ILuaState lua) {
