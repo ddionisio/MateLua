@@ -17,6 +17,7 @@ namespace M8.Lua {
             public bool input; //set true to enable input
             public bool sceneManager;
             public bool sceneState;
+            public bool audio;
         }
 
         public Include include;
@@ -46,6 +47,11 @@ namespace M8.Lua {
             if(include.sceneState) {
                 lua.L_RequireF(Library.MateSceneState.LIB_NAME, Library.MateSceneState.OpenLib, false);
                 lua.L_RequireF(Library.MateGlobalState.LIB_NAME, Library.MateGlobalState.OpenLib, false);
+            }
+            if(include.audio) {
+                lua.L_RequireF(Library.MateMusic.LIB_NAME, Library.MateMusic.OpenLib, false);
+                lua.L_RequireF(Library.MateSoundGlobal.LIB_NAME, Library.MateSoundGlobal.OpenLib, false);
+                lua.L_RequireF(Library.MateSound.LIB_NAME, Library.MateSound.OpenLib, false);
             }
         }
 
