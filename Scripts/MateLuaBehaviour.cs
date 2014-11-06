@@ -16,6 +16,7 @@ namespace M8.Lua {
         public struct Include {
             public bool input; //set true to enable input
             public bool sceneManager;
+            public bool sceneState;
         }
 
         public Include include;
@@ -42,6 +43,10 @@ namespace M8.Lua {
 
             if(include.input) lua.L_RequireF(Library.MateInput.LIB_NAME, Library.MateInput.OpenLib, false);
             if(include.sceneManager) lua.L_RequireF(Library.MateSceneMgr.LIB_NAME, Library.MateSceneMgr.OpenLib, false);
+            if(include.sceneState) {
+                lua.L_RequireF(Library.MateSceneState.LIB_NAME, Library.MateSceneState.OpenLib, false);
+                lua.L_RequireF(Library.MateGlobalState.LIB_NAME, Library.MateGlobalState.OpenLib, false);
+            }
         }
 
         void ILuaInitializer.LuaPreExecute(ILuaState lua) {
