@@ -19,6 +19,8 @@ namespace M8.Lua {
             public bool sceneState;
             public bool audio;
             public bool entity;
+            public bool pool;
+            public bool localize;
         }
 
         public Include include;
@@ -44,17 +46,28 @@ namespace M8.Lua {
             mLua = lua;
 
             if(include.input) lua.L_RequireF(Library.MateInput.LIB_NAME, Library.MateInput.OpenLib, false);
+
             if(include.sceneManager) lua.L_RequireF(Library.MateSceneMgr.LIB_NAME, Library.MateSceneMgr.OpenLib, false);
+
             if(include.sceneState) {
                 lua.L_RequireF(Library.MateSceneState.LIB_NAME, Library.MateSceneState.OpenLib, false);
                 lua.L_RequireF(Library.MateGlobalState.LIB_NAME, Library.MateGlobalState.OpenLib, false);
             }
+
             if(include.audio) {
                 lua.L_RequireF(Library.MateMusic.LIB_NAME, Library.MateMusic.OpenLib, false);
                 lua.L_RequireF(Library.MateSoundGlobal.LIB_NAME, Library.MateSoundGlobal.OpenLib, false);
                 lua.L_RequireF(Library.MateSound.LIB_NAME, Library.MateSound.OpenLib, false);
             }
+
             if(include.entity) lua.L_RequireF(Library.MateEntity.LIB_NAME, Library.MateEntity.OpenLib, false);
+
+            if(include.pool) {
+                lua.L_RequireF(Library.MatePools.LIB_NAME, Library.MatePools.OpenLib, false);
+                Library.MatePool.DefineMeta(lua);
+            }
+
+            if(include.localize) lua.L_RequireF(Library.MateLocalize.LIB_NAME, Library.MateLocalize.OpenLib, false);
         }
 
         void ILuaInitializer.LuaPreExecute(ILuaState lua) {
