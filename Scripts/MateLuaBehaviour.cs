@@ -21,6 +21,8 @@ namespace M8.Lua {
             public bool entity;
             public bool pool;
             public bool localize;
+            public bool userdata;
+            public bool ui;
         }
 
         public Include include;
@@ -68,6 +70,10 @@ namespace M8.Lua {
             }
 
             if(include.localize) lua.L_RequireF(Library.MateLocalize.LIB_NAME, Library.MateLocalize.OpenLib, false);
+
+            if(include.userdata) lua.L_RequireF(Library.MateUserData.LIB_NAME, Library.MateUserData.OpenLib, false);
+
+            if(include.ui) lua.L_RequireF(Library.MateUIModalManager.LIB_NAME, Library.MateUIModalManager.OpenLib, false);
         }
 
         void ILuaInitializer.LuaPreExecute(ILuaState lua) {

@@ -40,6 +40,7 @@ namespace M8.Lua.Library {
                     new NameFuncPair("DeleteValuesByNameContain", MateSceneStateCommon.DeleteValuesByNameContain),
                     new NameFuncPair("ClearAllSavedData", MateSceneStateCommon.ClearAllSavedData),
                     new NameFuncPair("ResetValues", MateSceneStateCommon.ResetValues),
+                    new NameFuncPair("SetValue", SetValue),
                     new NameFuncPair("SetPersist", SetPersist),
                     new NameFuncPair("CheckFlag", CheckFlag),
                     new NameFuncPair("CheckFlagMask", CheckFlagMask),
@@ -94,6 +95,12 @@ namespace M8.Lua.Library {
             return 0;
         }
 
+        private static int SetValue(ILuaState lua) {
+            string field = lua.L_CheckString(1);
+            SceneState.instance.SetValue(field, lua.L_CheckInteger(2), lua.GetTop() >= 3 ? lua.ToBoolean(3) : false);
+            return 0;
+        }
+
         private static int SetPersist(ILuaState lua) {
             string field = lua.L_CheckString(2);
             bool persist = lua.ToBoolean(3);
@@ -144,10 +151,14 @@ namespace M8.Lua.Library {
                     new NameFuncPair("DeleteValuesByNameContain", MateSceneStateCommon.DeleteValuesByNameContain),
                     new NameFuncPair("ClearAllSavedData", MateSceneStateCommon.ClearAllSavedData),
                     new NameFuncPair("ResetValues", MateSceneStateCommon.ResetValues),
+                    new NameFuncPair("SetValue", SetValue),
                     new NameFuncPair("SetPersist", SetPersist),
                     new NameFuncPair("CheckFlag", CheckFlag),
                     new NameFuncPair("CheckFlagMask", CheckFlagMask),
                     new NameFuncPair("SetFlag", SetFlag),
+                    new NameFuncPair("SnapShotSave", SnapShotSave),
+                    new NameFuncPair("SnapShotRestore", SnapShotRestore),
+                    new NameFuncPair("SnapShotDelete", SnapShotDelete),
                 };
 
             Utils.NewMetaGetterSetter(lua, typeof(MateGlobalState), m_funcs);
@@ -198,6 +209,12 @@ namespace M8.Lua.Library {
             return 0;
         }
 
+        private static int SetValue(ILuaState lua) {
+            string field = lua.L_CheckString(1);
+            SceneState.instance.SetGlobalValue(field, lua.L_CheckInteger(2), lua.GetTop() >= 3 ? lua.ToBoolean(3) : false);
+            return 0;
+        }
+
         private static int SetPersist(ILuaState lua) {
             string field = lua.L_CheckString(2);
             bool persist = lua.ToBoolean(3);
@@ -227,6 +244,21 @@ namespace M8.Lua.Library {
             bool state = lua.ToBoolean(4);
             bool persistent = lua.ToBoolean(5);
             SceneState.instance.SetGlobalFlag(field, bit, state, persistent);
+            return 0;
+        }
+
+        private static int SnapShotSave(ILuaState lua) {
+            SceneState.instance.GlobalSnapshotSave();
+            return 0;
+        }
+
+        private static int SnapShotRestore(ILuaState lua) {
+            SceneState.instance.GlobalSnapshotRestore();
+            return 0;
+        }
+
+        private static int SnapShotDelete(ILuaState lua) {
+            SceneState.instance.GlobalSnapshotDelete();
             return 0;
         }
     }
