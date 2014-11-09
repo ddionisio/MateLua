@@ -25,9 +25,39 @@ namespace M8.Lua {
         private const string luaMethodCollisionEnter = "onCollisionEnter";
         private const string luaMethodCollisionStay = "onCollisionStay";
         private const string luaMethodCollisionExit = "onCollisionExit";
-                        
+
+        [Serializable]
+        public struct Variable {
+            public enum Type {
+                Boolean,
+                Integer,
+                Float,
+                String,
+                Object
+            }
+
+            public string name;
+            public Type type;
+
+            public int iVal;
+            public float fVal;
+            public string sVal;
+            public UnityEngine.Object oVal;
+
+            public void Reset() {
+                iVal = 0;
+                fVal = 0f;
+                sVal = "";
+                oVal = null;
+            }
+        }
+                
         public string scriptPath; //path to lua file
         public TextAsset scriptText; //if code path is empty, use this for loading
+
+        [HideInInspector]
+        [SerializeField]
+        public Variable[] initialVars; //added to the lua environment before executing script
 
         private ILuaState mLua;
 
@@ -37,11 +67,110 @@ namespace M8.Lua {
         private int mLuaMethodOnEnable;
         private int mLuaMethodOnDisable;
         private int mLuaMethodOnDestroy;
-                        
+
         public ILuaState lua { get { return mLua; } }
-                
+
+        //Variable set/get from this lua's global
+
+        public bool GetBoolean(string varName) {
+            mLua.GetGlobal(varName);
+            bool ret = mLua.ToBoolean(-1);
+            mLua.Pop(1);
+            return ret;
+        }
+
+        public void SetBoolean(string varName, bool val) {
+            mLua.PushBoolean(val);
+            mLua.SetGlobal(varName);
+        }
+
+        public float GetFloat(string varName, float defaultVal) {
+            mLua.GetGlobal(varName);
+
+            bool isNum;
+
+            float ret = (float)mLua.ToNumberX(-1, out isNum);
+
+            if(!isNum) ret = defaultVal;
+
+            mLua.Pop(1);
+
+            return ret;
+        }
+
+        public void SetFloat(string varName, float val) {
+            mLua.PushNumber(val);
+            mLua.SetGlobal(varName);
+        }
+
+        public int GetInt(string varName, int defaultVal) {
+            mLua.GetGlobal(varName);
+
+            bool isNum;
+
+            int ret = mLua.ToIntegerX(-1, out isNum);
+
+            if(!isNum) ret = defaultVal;
+
+            mLua.Pop(1);
+
+            return ret;
+        }
+
+        public void SetInt(string varName, int val) {
+            mLua.PushInteger(val);
+            mLua.SetGlobal(varName);
+        }
+
+        public string GetString(string varName, string defaultVal) {
+            mLua.GetGlobal(varName);
+
+            string ret = mLua.L_ToString(-1);
+
+            if(ret == null) ret = defaultVal;
+
+            mLua.Pop(1);
+
+            return ret;
+        }
+
+        public void SetString(string varName, string val) {
+            mLua.PushString(val);
+            mLua.SetGlobal(varName);
+        }
+
+        public object GetObject(string varName, object defaultVal) {
+            mLua.GetGlobal(varName);
+
+            object ret = lua.ToUserData(-1);
+
+            if(ret == null) ret = defaultVal;
+
+            mLua.Pop(1);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Set val to null to 'delete' variable
+        /// </summary>
+        public void SetObject(string varName, object val) {
+            if(val == null)
+                mLua.PushNil();
+            else {
+                mLua.NewUserData(val);
+                Utils.SetMetaTableByType(lua, val.GetType());
+            }
+
+            mLua.SetGlobal(varName);
+        }
+
+        public void Delete(string varName) {
+            SetObject(varName, null);
+        }
+
         //Unity Calls
-                
+
         void OnDestroy() {
             if(mLuaMethodOnDestroy != Utils.nil)
                 Utils.CallMethod(mLua, mLuaMethodOnDestroy);
@@ -96,6 +225,36 @@ namespace M8.Lua {
 
             lua.PushCSharpFunction(LuaCancelAllInvoke);
             lua.SetGlobal("cancelAllInvoke");
+
+            //add initial variables
+            for(int i = 0; i < initialVars.Length; i++) {
+                Variable var = initialVars[i];
+                if(!string.IsNullOrEmpty(var.name)) {
+                    switch(var.type) {
+                        case Variable.Type.Boolean:
+                            lua.PushBoolean(var.iVal != 0);
+                            break;
+                        case Variable.Type.Integer:
+                            lua.PushInteger(var.iVal);
+                            break;
+                        case Variable.Type.Float:
+                            lua.PushNumber(var.fVal);
+                            break;
+                        case Variable.Type.String:
+                            lua.PushString(var.sVal);
+                            break;
+                        case Variable.Type.Object:
+                            if(var.oVal) {
+                                lua.NewUserData(var.oVal);
+                                Utils.SetMetaTableByType(mLua, var.oVal.GetType());
+                            }
+                            else
+                                continue;
+                            break;
+                    }
+                    lua.SetGlobal(var.name);
+                }
+            }
         }
 
         void ILuaInitializer.LuaPostExecute(ILuaState lua) {
@@ -106,7 +265,7 @@ namespace M8.Lua {
             mLuaMethodOnEnable = Utils.GetMethod(lua, luaMethodOnEnable);
             mLuaMethodOnDisable = Utils.GetMethod(lua, luaMethodOnDisable);
             mLuaMethodOnDestroy = Utils.GetMethod(lua, luaMethodOnDestroy);
-                        
+
             int updateInd = Utils.GetMethod(lua, luaMethodUpdate);
             if(updateInd != Utils.nil) {
                 M8.Auxiliary.AuxUpdate aux = M8.Util.GetOrAddComponent<M8.Auxiliary.AuxUpdate>(gameObject);
@@ -145,7 +304,7 @@ namespace M8.Lua {
                 if(collExitInd != Utils.nil) aux.exitCallback += delegate(Collision c) { Utils.CallMethod<Collision>(lua, collExitInd, c); };
             }
         }
-                
+
         void Awake() {
             //grab lua initializers
             Component[] comps = GetComponents<Component>();
@@ -159,17 +318,17 @@ namespace M8.Lua {
             //init lua
             mLua = LuaAPI.NewState();
             mLua.L_OpenLibs();
-                        
+
             //setup requires
             for(int i = 0; i < inits.Count; i++)
                 inits[i].LuaRequire(mLua);
 
             mLua.Pop(mLua.GetTop());
-            
+
             //setup global fields and functions
             for(int i = 0; i < inits.Count; i++)
                 inits[i].LuaPreExecute(mLua);
-            
+
             //execute
             ThreadStatus status = string.IsNullOrEmpty(scriptPath) ? mLua.L_DoString(scriptText.text) : mLua.L_DoFile(scriptPath);
             if(status != ThreadStatus.LUA_OK) {
@@ -183,13 +342,13 @@ namespace M8.Lua {
             //additional setups
             for(int i = 0; i < inits.Count; i++)
                 inits[i].LuaPostExecute(mLua);
-                        
+
             /*mLua.CreateTable(0, 2);
             mLua.PushLightUserData(gameObject);
             mLua.SetField(-2, "__go");
             mLua.PushCSharpFunction(goname);
             mLua.SetField(-2, "name");*/
-                                                                        
+
             //awake
             if(mAwakeInd != Utils.nil)
                 Utils.CallMethod(mLua, mAwakeInd);
@@ -216,12 +375,12 @@ namespace M8.Lua {
         }
 
         //Internal
-        
+
         private int LuaInvoke(ILuaState lua) {
 
             int funcRef = Utils.GetFuncRef(lua, 1);
             if(funcRef == 0) return 0;
-               
+
             float time = (float)lua.L_CheckNumber(2);
 
             //TODO: n-arguments to pass
