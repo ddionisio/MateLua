@@ -51,7 +51,7 @@ namespace M8.Lua {
                 oVal = null;
             }
         }
-                
+
         public string scriptPath; //path to lua file
         public TextAsset scriptText; //if code path is empty, use this for loading
 
@@ -103,6 +103,25 @@ namespace M8.Lua {
             mLua.SetGlobal(varName);
         }
 
+        public double GetNumber(string varName, double defaultVal) {
+            mLua.GetGlobal(varName);
+
+            bool isNum;
+
+            double ret = mLua.ToNumberX(-1, out isNum);
+
+            if(!isNum) ret = defaultVal;
+
+            mLua.Pop(1);
+
+            return ret;
+        }
+
+        public void SetNumber(string varName, double val) {
+            mLua.PushNumber(val);
+            mLua.SetGlobal(varName);
+        }
+
         public int GetInt(string varName, int defaultVal) {
             mLua.GetGlobal(varName);
 
@@ -125,7 +144,7 @@ namespace M8.Lua {
         public string GetString(string varName, string defaultVal) {
             mLua.GetGlobal(varName);
 
-            string ret = mLua.L_ToString(-1);
+            string ret = mLua.ToString(-1);
 
             if(ret == null) ret = defaultVal;
 
@@ -142,7 +161,7 @@ namespace M8.Lua {
         public object GetObject(string varName, object defaultVal) {
             mLua.GetGlobal(varName);
 
-            object ret = lua.ToUserData(-1);
+            object ret = mLua.ToUserData(-1);
 
             if(ret == null) ret = defaultVal;
 
@@ -159,7 +178,7 @@ namespace M8.Lua {
                 mLua.PushNil();
             else {
                 mLua.NewUserData(val);
-                Utils.SetMetaTableByType(lua, val.GetType());
+                Utils.SetMetaTableByType(mLua, val.GetType());
             }
 
             mLua.SetGlobal(varName);
@@ -167,6 +186,44 @@ namespace M8.Lua {
 
         public void Delete(string varName) {
             SetObject(varName, null);
+        }
+
+        /// <summary>
+        /// Note: function must be defined globally in the lua file. Returns 0 if not found.
+        /// </summary>
+        public int GetFunction(string funcName) {
+            mLua.GetGlobal(funcName);
+            if(mLua.IsFunction(-1))
+                return mLua.L_Ref(LuaDef.LUA_REGISTRYINDEX);
+            else {
+                Debug.LogWarning("Function not found: "+funcName);
+                mLua.Pop(1);
+                return 0;
+            }
+        }
+
+        public void CallFunction(int funcRef, params object[] args) {
+            mLua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
+
+            for(int i = 0; i < args.Length; i++) {
+                System.Type t = args[i].GetType();
+                if(t == typeof(bool))
+                    mLua.PushBoolean((bool)args[i]);
+                else if(t == typeof(int))
+                    mLua.PushInteger((int)args[i]);
+                else if(t == typeof(float))
+                    mLua.PushNumber((float)args[i]);
+                else if(t == typeof(string))
+                    mLua.PushString((string)args[i]);
+                else {
+                    mLua.NewUserData(args[i]);
+                    Utils.SetMetaTableByType(mLua, t);
+                }
+            }
+
+            ThreadStatus status = mLua.PCall(args.Length, 0, 0);
+            if(status != ThreadStatus.LUA_OK)
+                mLua.L_Error("Error running function: "+lua.L_ToString(-1));
         }
 
         //Unity Calls
@@ -203,6 +260,8 @@ namespace M8.Lua {
 
             //meta-only objects
             Library.UnityContactPoint.DefineMeta(lua);
+
+            LuaBehaviourMeta.DefineMeta(lua);
         }
 
         void ILuaInitializer.LuaPreExecute(ILuaState lua) {
@@ -451,6 +510,171 @@ namespace M8.Lua {
                 }
                 yield return wait;
             }
+        }
+    }
+
+    static class LuaBehaviourMeta {
+        private static NameFuncPair[] m_funcs = null;
+
+        public static void DefineMeta(ILuaState lua) {
+            if(m_funcs == null)
+                m_funcs = new NameFuncPair[] {
+                    new NameFuncPair(Utils.GETTER, Get),
+                    new NameFuncPair(Utils.SETTER, Set),
+
+                };
+
+            Utils.NewMetaGetterSetter(lua, typeof(LuaBehaviour), m_funcs);
+        }
+
+        private static int Get(ILuaState lua) {
+            LuaBehaviour b = Utils.CheckUnityObject<LuaBehaviour>(lua, 1);
+
+            string field = lua.L_CheckString(2);
+
+            //make sure it's not from unity stuff or not meta
+            if(!Library.UnityBehaviour.PushField(lua, b, field)
+                || !lua.L_GetMetaField(1, field)) {
+                //see if we can grab it from global
+                b.lua.GetGlobal(field);
+
+                if(b.lua.IsNoneOrNil(-1)) { //nothing, go through meta
+                    b.lua.Pop(1);
+                    if(!lua.L_GetMetaField(1, field))
+                        lua.PushNil();
+                }
+                else {
+                    switch(b.lua.Type(-1)) {
+                        case LuaType.LUA_TBOOLEAN:
+                            lua.PushBoolean(b.lua.ToBoolean(-1));
+                            break;
+                        case LuaType.LUA_TNUMBER:
+                            lua.PushNumber(b.lua.ToNumber(-1));
+                            break;
+                        case LuaType.LUA_TSTRING:
+                            lua.PushString(b.lua.ToString(-1));
+                            break;
+                        case LuaType.LUA_TUSERDATA:
+                            object o = b.lua.ToUserData(-1);
+                            if(o != null) {
+                                lua.NewUserData(o);
+                                Utils.SetMetaTableByType(lua, o.GetType());
+                            }
+                            else
+                                lua.PushNil();
+                            break;
+                        case LuaType.LUA_TLIGHTUSERDATA:
+                            object lo = b.lua.ToUserData(-1);
+                            if(lo != null)
+                                lua.NewUserData(lo);
+                            else
+                                lua.PushNil();
+                            break;
+                        default: //tables? others?
+                            lua.PushNil();
+                            break;
+                    }
+
+                    b.lua.Pop(1);
+                }
+            }
+
+            return 1;
+        }
+
+        private static int Set(ILuaState lua) {
+            LuaBehaviour b = Utils.CheckUnityObject<LuaBehaviour>(lua, 1);
+
+            string field = lua.L_CheckString(2);
+
+            if(!Library.UnityBehaviour.SetField(lua, b, field)) { //make sure it's not from unity stuff
+
+                switch(lua.Type(3)) {
+                    case LuaType.LUA_TNIL:
+                    case LuaType.LUA_TNONE:
+                        b.SetObject(field, null);
+                        break;
+                    case LuaType.LUA_TBOOLEAN:
+                        b.SetBoolean(field, lua.ToBoolean(3));
+                        break;
+                    case LuaType.LUA_TNUMBER:
+                        b.SetNumber(field, lua.ToNumber(3));
+                        break;
+                    case LuaType.LUA_TSTRING:
+                        b.SetString(field, lua.ToString(3));
+                        break;
+                    case LuaType.LUA_TUSERDATA:
+                        b.SetObject(field, lua.ToObject(3));
+                        break;
+                    case LuaType.LUA_TLIGHTUSERDATA:
+                        b.lua.PushLightUserData(lua.ToObject(3));
+                        break;
+                    default:
+                        lua.L_Error("Unknown field: {0}", field);
+                        break;
+                }
+            }
+            return 0;
+        }
+
+        private static int Call(ILuaState lua) {
+            LuaBehaviour b = Utils.CheckUnityObject<LuaBehaviour>(lua, 1);
+
+            string funcName = lua.L_CheckString(2);
+
+            //check to see if function exists
+            b.lua.GetGlobal(funcName);
+            if(b.lua.IsFunction(-1)) {
+                //args
+                int stackCount = lua.GetTop();
+
+                for(int i = 3; i <= stackCount; i++) {
+                    switch(lua.Type(i)) {
+                        case LuaType.LUA_TNIL:
+                        case LuaType.LUA_TNONE:
+                            b.lua.PushNil();
+                            break;
+                        case LuaType.LUA_TBOOLEAN:
+                            b.lua.PushBoolean(lua.ToBoolean(i));
+                            break;
+                        case LuaType.LUA_TNUMBER:
+                            b.lua.PushNumber(lua.ToNumber(i));
+                            break;
+                        case LuaType.LUA_TSTRING:
+                            b.lua.PushString(lua.ToString(i));
+                            break;
+                        case LuaType.LUA_TUSERDATA:
+                            object o = lua.ToObject(i);
+                            if(o != null) {
+                                b.lua.NewUserData(o);
+                                Utils.SetMetaTableByType(b.lua, o.GetType());
+                            }
+                            else
+                                b.lua.PushNil();
+                            break;
+                        case LuaType.LUA_TLIGHTUSERDATA:
+                            object lo = lua.ToObject(i);
+                            if(lo != null)
+                                b.lua.PushLightUserData(lo);
+                            else
+                                b.lua.PushNil();
+                            break;
+                        default:
+                            b.lua.PushNil();
+                            break;
+                    }
+                }
+
+                ThreadStatus status = b.lua.PCall(stackCount - 2, 0, 0);
+                if(status != ThreadStatus.LUA_OK)
+                    b.lua.L_Error("Error running function: "+b.lua.L_ToString(-1));
+            }
+            else {
+                b.lua.Pop(1);
+                lua.L_ArgError(2, "Function not found.");
+            }
+                        
+            return 0;
         }
     }
 }
