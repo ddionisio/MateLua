@@ -42,7 +42,7 @@ namespace M8.Lua.Library {
         private static int Get(ILuaState lua) {
             string field = lua.L_CheckString(2);
 
-            UserData ud = UserData.instance;
+            UserData ud = UserData.main;
             System.Type type = ud.GetType(field);
             if(type != null) {
                 if(type == typeof(int))
@@ -61,7 +61,7 @@ namespace M8.Lua.Library {
         private static int Set(ILuaState lua) {
             string field = lua.L_CheckString(2);
 
-            UserData ud = UserData.instance;
+            UserData ud = UserData.main;
 
             if(lua.Type(3) == LuaType.LUA_TSTRING)
                 ud.SetString(field, lua.ToString(3));
@@ -77,49 +77,49 @@ namespace M8.Lua.Library {
 
         private static int SetInt(ILuaState lua) {
             string field = lua.L_CheckString(1);
-            UserData.instance.SetInt(field, lua.L_CheckInteger(2));
+            UserData.main.SetInt(field, lua.L_CheckInteger(2));
             return 0;
         }
 
         private static int SnapshotSave(ILuaState lua) {
-            UserData.instance.SnapshotSave();
+            UserData.main.SnapshotSave();
             return 0;
         }
 
         private static int SnapshotRestore(ILuaState lua) {
-            UserData.instance.SnapshotRestore();
+            UserData.main.SnapshotRestore();
             return 0;
         }
 
         private static int SnapshotDelete(ILuaState lua) {
-            UserData.instance.SnapshotDelete();
+            UserData.main.SnapshotDelete();
             return 0;
         }
 
         private static int SnapshotPreserve(ILuaState lua) {
             string field = lua.L_CheckString(1);
-            UserData.instance.SnapshotPreserve(field);
+            UserData.main.SnapshotPreserve(field);
             return 0;
         }
 
         private static int Load(ILuaState lua) {
-            UserData.instance.Load();
+            UserData.main.Load();
             return 0;
         }
 
         private static int Save(ILuaState lua) {
-            UserData.instance.Save();
+            UserData.main.Save();
             return 0;
         }
 
         private static int DeleteAll(ILuaState lua) {
-            UserData.instance.Delete();
+            UserData.main.Delete();
             return 0;
         }
 
         private static int DeleteAllByNameContain(ILuaState lua) {
             string criteria = lua.L_CheckString(1);
-            UserData.instance.DeleteAllByNameContain(criteria);
+            UserData.main.DeleteAllByNameContain(criteria);
             return 0;
         }
     }
