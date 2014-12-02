@@ -49,14 +49,14 @@ namespace M8.Lua.Library {
         private static int IsPressed(ILuaState lua) {
             int player = lua.L_CheckInteger(1);
             string action = lua.L_CheckString(2);
-            lua.PushBoolean(InputManager.instance.GetState(player, action) == InputManager.State.Pressed);
+            lua.PushBoolean(InputManager.instance.IsPressed(player, action));
             return 1;
         }
 
         private static int IsReleased(ILuaState lua) {
             int player = lua.L_CheckInteger(1);
             string action = lua.L_CheckString(2);
-            lua.PushBoolean(InputManager.instance.GetState(player, action) == InputManager.State.Released);
+            lua.PushBoolean(InputManager.instance.IsReleased(player, action));
             return 1;
         }
 
