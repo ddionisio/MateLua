@@ -4,6 +4,8 @@ using System.Collections;
 using UniLua;
 
 namespace M8.Lua.Library {
+    using UIModalManager = UIModal.Manager;
+
     public static class MateUIModalManager {
         public const string LIB_NAME = "Mate.UIModalManager";
 
