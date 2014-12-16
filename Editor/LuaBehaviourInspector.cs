@@ -10,7 +10,7 @@ namespace M8.Lua {
         public override void OnInspectorGUI() {
             base.OnInspectorGUI();
 
-            M8.Editor.Utility.DrawSeparator();
+            M8.EditorExt.Utility.DrawSeparator();
 
             mVarFoldout = EditorGUILayout.Foldout(mVarFoldout, "Variables");
             if(mVarFoldout) {

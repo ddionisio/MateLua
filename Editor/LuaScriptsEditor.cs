@@ -41,7 +41,7 @@ namespace M8.Lua {
             if(mDestDir != dd)
                 EditorPrefs.SetString(LuaScriptsProcess.destDirKey, mDestDir = dd);
 
-            M8.Editor.Utility.DrawSeparator();
+            M8.EditorExt.Utility.DrawSeparator();
 
             if(GUILayout.Button(new GUIContent("Process All Scripts", "Searches for all lua files in the Asset folder based on Script Dir, and then copy them all to Dest Dir as txt file."))) {
                 string[] paths = Directory.GetFiles(Application.dataPath, "*.lua", SearchOption.AllDirectories);

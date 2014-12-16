@@ -22,10 +22,10 @@ namespace M8.Lua.Library {
                     new NameFuncPair("RegisterParam", RegisterParam),
                 };
 
-            Utils.NewMetaGetterSetter(lua, typeof(GameLocalize), m_funcs);
+            Utils.NewMetaGetterSetter(lua, typeof(Localize), m_funcs);
             lua.L_NewLib(l_funcs);
 
-            Utils.SetMetaTableByType(lua, typeof(GameLocalize));
+            Utils.SetMetaTableByType(lua, typeof(Localize));
 
             return 1;
         }
@@ -33,7 +33,7 @@ namespace M8.Lua.Library {
         private static int Get(ILuaState lua) {
             string field = lua.L_CheckString(2);
 
-            string text = GameLocalize.instance.GetText(field);
+            string text = Localize.instance.GetText(field);
             if(string.IsNullOrEmpty(text)) {
                 if(!lua.L_GetMetaField(1, field))
                     lua.PushNil();
@@ -51,7 +51,7 @@ namespace M8.Lua.Library {
         }
 
         private static int Refresh(ILuaState lua) {
-            GameLocalize.instance.Refresh();
+            Localize.instance.Refresh();
             return 0;
         }
 
@@ -59,7 +59,7 @@ namespace M8.Lua.Library {
             string paramKey = lua.L_CheckString(1);
             int funcRef = Utils.GetFuncRef(lua, 2);
             if(funcRef > 0) {
-                GameLocalize.ParameterCallback call = delegate(string key) {
+                Localize.ParameterCallback call = delegate(string key) {
                     lua.RawGetI(LuaDef.LUA_REGISTRYINDEX, funcRef);
 
                     lua.PushString(key);
@@ -71,7 +71,7 @@ namespace M8.Lua.Library {
                     return lua.ToString(-1);
                 };
 
-                GameLocalize.instance.RegisterParam(paramKey, call);
+                Localize.instance.RegisterParam(paramKey, call);
             }
             return 0;
         }
