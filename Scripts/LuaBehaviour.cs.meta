@@ -1,8 +1,10 @@
 fileFormatVersion: 2
-guid: 42ae30e9960e8304eaa7f89639626300
+guid: 8491aae67dd99854e9012eba2d2a9c83
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
-  executionOrder: -12016
+  defaultReferences:
+  - scriptLoader: {fileID: 11400000, guid: 126d8f5b89597804092b0b162094f4dd, type: 2}
+  - scriptText: {instanceID: 0}
+  executionOrder: 0
   icon: {instanceID: 0}
   userData: 
