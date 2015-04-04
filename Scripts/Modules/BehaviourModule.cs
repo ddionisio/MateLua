@@ -25,18 +25,18 @@ namespace M8.Lua.Modules {
             return mBehaviour.StartCoroutine(DoInvokeRoutine(func, param));
         }
 
-        public void CancelInvoke(UnityEngine.Coroutine coro, DynValue param) {
+        public void CancelInvoke(UnityEngine.Coroutine coro) {
             mBehaviour.StopCoroutine(coro);
         }
 
-        IEnumerator DoInvoke(DynValue func, float delay, DynValue param) {
+        IEnumerator DoInvoke(DynValue func, float delay, params DynValue[] param) {
             if(delay > 0f)
                 yield return new WaitForSeconds(delay);
 
             mScript.Call(func, param);
         }
 
-        IEnumerator DoInvokeRepeat(DynValue func, float startDelay, float repeatDelay, DynValue param) {
+        IEnumerator DoInvokeRepeat(DynValue func, float startDelay, float repeatDelay, params DynValue[] param) {
             if(startDelay > 0f)
                 yield return new WaitForSeconds(startDelay);
 
@@ -49,15 +49,19 @@ namespace M8.Lua.Modules {
             }
         }
 
-        IEnumerator DoInvokeRoutine(DynValue func, DynValue param) {
+        IEnumerator DoInvokeRoutine(DynValue func, params DynValue[] param) {
             DynValue coFunc;
             switch(func.Type) {
                 case DataType.Thread:
                     coFunc = func;
                     break;
-                default:
+                case DataType.Function:
+                case DataType.ClrFunction:
                     coFunc = mScript.CreateCoroutine(func);
                     break;
+                default:
+                    Debug.LogWarning("Not a valid function/coroutine: "+func);
+                    yield break;
             }
 
             var routine = coFunc.Coroutine;
@@ -66,6 +70,23 @@ namespace M8.Lua.Modules {
                 DynValue val = routine.Resume(param);
 
                 switch(val.Type) {
+                    case DataType.Thread:
+                        yield return mBehaviour.StartCoroutine(DoInvokeRoutine(val));
+                        break;
+                    case DataType.Tuple:
+                        var tuple = val.Tuple;
+                        if(tuple[0].Type == DataType.Thread) {
+                            if(tuple.Length > 1) {
+                                var subParam = new DynValue[tuple.Length - 1];
+                                System.Array.Copy(tuple, 1, subParam, 0, tuple.Length - 1);
+                                yield return mBehaviour.StartCoroutine(DoInvokeRoutine(tuple[0], subParam));
+                            }
+                            else
+                                yield return mBehaviour.StartCoroutine(DoInvokeRoutine(tuple[0]));
+                        }
+                        else
+                            yield return null;
+                        break;
                     case DataType.UserData:
                         YieldInstruction y = val.ToObject<YieldInstruction>();
                         if(y != null) {
