@@ -32,7 +32,6 @@ namespace M8.Lua.Modules {
                 MoonSharp.Interpreter.UserData.RegisterType<GameObjectModule>();
                 Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<GameObject>(itm => MoonSharp.Interpreter.UserData.Create(new GameObjectModule(itm)));
                 Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(DataType.UserData, typeof(GameObject), itm => itm.ToObject<GameObjectModule>().mGo);
-
                 _isTypeRegistered = true;
             }
 

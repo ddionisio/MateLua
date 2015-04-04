@@ -4,17 +4,13 @@ using System.Collections;
 
 namespace M8.Lua {
     [CustomEditor(typeof(LuaBehaviour))]
-    public class LuaBehaviourInspector : UnityEditor.Editor {
+    public class LuaBehaviourInspector : Editor {
         private bool mVarFoldout;
 
         public override void OnInspectorGUI() {
             base.OnInspectorGUI();
 
             LuaBehaviour dat = target as LuaBehaviour;
-
-            dat.coreModules = (MoonSharp.Interpreter.CoreModules)EditorGUILayout.EnumMaskField("Core Modules", dat.coreModules);
-
-            dat.unityCoreModules = (UnityCoreModules)EditorGUILayout.EnumMaskField("Unity Core Modules", dat.unityCoreModules);
 
             M8.EditorExt.Utility.DrawSeparator();
 

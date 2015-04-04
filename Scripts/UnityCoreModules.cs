@@ -3,6 +3,7 @@
     public enum UnityCoreModules {
         Time = 0x1,
         Math = 0x2,
+        Coroutine = 0x4,
     }
 
     internal static class UnityCoreModules_Ext {

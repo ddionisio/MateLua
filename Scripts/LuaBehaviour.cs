@@ -8,15 +8,13 @@ using MoonSharp.Interpreter;
 namespace M8.Lua {
     using Modules;
 
-    public class LuaBehaviour : MonoBehaviour, IDebugPrint {
+    [AddComponentMenu("M8/Lua/Behaviour")]
+    public class LuaBehaviour : MonoBehaviour {
         public const string luaFuncAwake = "Awake";
         public const string luaFuncStart = "Start";
         public const string luaFuncOnEnable = "OnEnable";
         public const string luaFuncOnDisable = "OnDisable";
         public const string luaFuncOnDestroy = "OnDestroy";
-
-        public const CoreModules coreModuleDefault = CoreModules.Basic | CoreModules.Bit32 | CoreModules.Coroutine | CoreModules.Dynamic | CoreModules.ErrorHandling | CoreModules.LoadMethods | CoreModules.Math | CoreModules.Metatables | CoreModules.OS_Time | CoreModules.String | CoreModules.Table | CoreModules.TableIterators;
-        public const UnityCoreModules unityCoreModuleDefault = UnityCoreModules.Time | UnityCoreModules.Math;
 
         [Serializable]
         public struct Variable {
@@ -44,19 +42,13 @@ namespace M8.Lua {
             }
         }
 
-        public LoaderBase scriptLoader;
+        public LoaderBase loaderOverride;
 
         [Tooltip("Path to lua file, loaded via scriptLoader.")]
         public string scriptPath;
 
         [Tooltip("If scriptPath is empty, this is used for loading")]
         public TextAsset scriptText;
-
-        [HideInInspector]
-        public CoreModules coreModules = coreModuleDefault;
-
-        [HideInInspector]
-        public UnityCoreModules unityCoreModules = unityCoreModuleDefault;
 
         [HideInInspector]
         public Variable[] initialVars; //added to the lua environment before executing script
@@ -106,19 +98,20 @@ namespace M8.Lua {
         }
                 
         void Awake() {
+            CoreModules coreModules = GlobalSettings.instance ? GlobalSettings.instance.coreModules : GlobalSettings.coreModuleDefault;
+            UnityCoreModules unityCoreModules = GlobalSettings.instance ? GlobalSettings.instance.unityCoreModules : GlobalSettings.unityCoreModuleDefault;
+
             mScript = new Script(coreModules);
-
-            if(scriptLoader)
-                mScript.Options.ScriptLoader = scriptLoader;
-
-            //core modules
             mScript.Globals.RegisterUnityCoreModules(unityCoreModules);
 
+            if(loaderOverride)
+                mScript.Options.ScriptLoader = loaderOverride;
+            
             //add game object and transform
             GameObjectModule.Register(mScript.Globals, gameObject);
             TransformModule.Register(mScript.Globals, transform);
-
-
+            BehaviourModule.Register(mScript.Globals, this);
+            
             //grab components for interfaces
             Component[] comps = GetComponentsInChildren<Component>(true);
 
@@ -166,20 +159,14 @@ namespace M8.Lua {
             }
         }
 
-        void Start() {
+        IEnumerator Start() {
             object startFunc = mScript.Globals[luaFuncStart];
             if(startFunc != null) {
-                try {
-                    mScript.Call(startFunc);
-                }
-                catch(InterpreterException ie) {
-                    Debug.LogError(ie.DecoratedMessage);
+                DynValue startCoFunc = mScript.CreateCoroutine(mScript.Globals[luaFuncStart]);
+                foreach(var val in startCoFunc.Coroutine.AsTypedEnumerable()) {
+                    yield return null;
                 }
             }
-        }
-
-        void IDebugPrint.Print(string message) {
-            Debug.Log(message);
         }
     }
 }
