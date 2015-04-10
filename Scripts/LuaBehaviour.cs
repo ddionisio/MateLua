@@ -160,13 +160,9 @@ namespace M8.Lua {
         }
 
         IEnumerator Start() {
-            object startFunc = mScript.Globals[luaFuncStart];
-            if(startFunc != null) {
-                DynValue startCoFunc = mScript.CreateCoroutine(mScript.Globals[luaFuncStart]);
-                foreach(var val in startCoFunc.Coroutine.AsTypedEnumerable()) {
-                    yield return null;
-                }
-            }
+            DynValue startFunc = mScript.Globals.Get(luaFuncStart);
+            if(!startFunc.IsNilOrNan())
+                yield return StartCoroutine(BehaviourModule.InvokeRoutine(mScript, this, startFunc));
         }
     }
 }

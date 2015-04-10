@@ -5,51 +5,49 @@ using MoonSharp.Interpreter;
 
 namespace M8.Lua.Modules {
     public struct BehaviourModule {
-        private Script mScript;
-        private MonoBehaviour mBehaviour;
+        private LuaBehaviour mBehaviour;
 
-        public BehaviourModule(Script script, MonoBehaviour b) {
-            mScript = script;
+        public BehaviourModule(LuaBehaviour b) {
             mBehaviour = b;
         }
 
-        public UnityEngine.Coroutine Invoke(DynValue func, float delay, DynValue param) {
-            return mBehaviour.StartCoroutine(DoInvoke(func, delay, param));
-        }
+        public bool enabled { get { return mBehaviour.enabled; } set { mBehaviour.enabled = value; } }
+        public bool isActiveAndEnabled { get { return mBehaviour.isActiveAndEnabled; } }
+        public GameObject gameObject { get { return mBehaviour.gameObject; } }
+        public DynValue globals { get { return DynValue.NewTable(mBehaviour.script.Globals); } }
 
-        public UnityEngine.Coroutine InvokeRepeat(DynValue func, float startDelay, float repeatDelay, DynValue param) {
-            return mBehaviour.StartCoroutine(DoInvokeRepeat(func, startDelay, repeatDelay, param));
-        }
+        public UnityEngine.Coroutine Invoke(DynValue func, DynValue param) {
+            if(func.Type == DataType.String) {
+                //try to grab from global
+                func = mBehaviour.script.Globals.Get(func);
+            }
 
-        public UnityEngine.Coroutine InvokeRoutine(DynValue func, DynValue param) {
-            return mBehaviour.StartCoroutine(DoInvokeRoutine(func, param));
+            return mBehaviour.StartCoroutine(InvokeRoutine(mBehaviour.script, mBehaviour, func, param));
         }
 
         public void CancelInvoke(UnityEngine.Coroutine coro) {
             mBehaviour.StopCoroutine(coro);
         }
 
-        IEnumerator DoInvoke(DynValue func, float delay, params DynValue[] param) {
-            if(delay > 0f)
-                yield return new WaitForSeconds(delay);
-
-            mScript.Call(func, param);
+        public void CancelAllInvoke() {
+            mBehaviour.StopAllCoroutines();
         }
+     
+        private static bool _isTypeRegistered = false;
+        public static void Register(Table table, LuaBehaviour b) {
+            if(!_isTypeRegistered) {
+                MoonSharp.Interpreter.UserData.RegisterType<BehaviourModule>();
 
-        IEnumerator DoInvokeRepeat(DynValue func, float startDelay, float repeatDelay, params DynValue[] param) {
-            if(startDelay > 0f)
-                yield return new WaitForSeconds(startDelay);
+                Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<LuaBehaviour>(itm => MoonSharp.Interpreter.UserData.Create(new BehaviourModule(itm)));
+                Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(DataType.UserData, typeof(LuaBehaviour), itm => itm.ToObject<BehaviourModule>().mBehaviour);
 
-            WaitForSeconds wait = new WaitForSeconds(repeatDelay);
-
-            while(true) {
-                mScript.Call(func, param);
-
-                yield return wait;
+                _isTypeRegistered = true;
             }
+
+            table["behaviour"] = new BehaviourModule(b);
         }
 
-        IEnumerator DoInvokeRoutine(DynValue func, params DynValue[] param) {
+        public static IEnumerator InvokeRoutine(Script script, MonoBehaviour behaviour, DynValue func, params DynValue[] param) {
             DynValue coFunc;
             switch(func.Type) {
                 case DataType.Thread:
@@ -57,21 +55,29 @@ namespace M8.Lua.Modules {
                     break;
                 case DataType.Function:
                 case DataType.ClrFunction:
-                    coFunc = mScript.CreateCoroutine(func);
+                    coFunc = script.CreateCoroutine(func);
                     break;
                 default:
-                    Debug.LogWarning("Not a valid function/coroutine: "+func);
+                    Debug.LogError(string.Format("'{0}' ({1}) is not a valid function/coroutine.", func, func.Type));
                     yield break;
             }
 
             var routine = coFunc.Coroutine;
 
             while(routine.State == CoroutineState.NotStarted || routine.State == CoroutineState.Suspended) {
-                DynValue val = routine.Resume(param);
+                DynValue val = null;
+
+                try {
+                    val = routine.Resume(param);
+                }
+                catch(InterpreterException ie) {
+                    Debug.LogError(ie.DecoratedMessage);
+                    yield break;
+                }
 
                 switch(val.Type) {
                     case DataType.Thread:
-                        yield return mBehaviour.StartCoroutine(DoInvokeRoutine(val));
+                        yield return behaviour.StartCoroutine(InvokeRoutine(script, behaviour, val));
                         break;
                     case DataType.Tuple:
                         var tuple = val.Tuple;
@@ -79,10 +85,10 @@ namespace M8.Lua.Modules {
                             if(tuple.Length > 1) {
                                 var subParam = new DynValue[tuple.Length - 1];
                                 System.Array.Copy(tuple, 1, subParam, 0, tuple.Length - 1);
-                                yield return mBehaviour.StartCoroutine(DoInvokeRoutine(tuple[0], subParam));
+                                yield return behaviour.StartCoroutine(InvokeRoutine(script, behaviour, tuple[0], subParam));
                             }
                             else
-                                yield return mBehaviour.StartCoroutine(DoInvokeRoutine(tuple[0]));
+                                yield return behaviour.StartCoroutine(InvokeRoutine(script, behaviour, tuple[0]));
                         }
                         else
                             yield return null;
@@ -108,17 +114,6 @@ namespace M8.Lua.Modules {
                         break;
                 }
             }
-        }
-
-        private static bool _isTypeRegistered = false;
-        public static void Register(Table table, MonoBehaviour b) {
-            if(!_isTypeRegistered) {
-                MoonSharp.Interpreter.UserData.RegisterType<BehaviourModule>();
-
-                _isTypeRegistered = true;
-            }
-
-            table["behaviour"] = new BehaviourModule(table.OwnerScript, b);
         }
     }
 }

@@ -13,6 +13,7 @@ namespace M8.Lua.Modules {
         public string layerName { get { return LayerMask.LayerToName(mGo.layer); } set { mGo.layer = LayerMask.NameToLayer(value); } }
         public string tag { get { return mGo.tag; } set { mGo.tag = value; } }
         public Transform transform { get { return mGo.transform; } }
+        public LuaBehaviour behaviour { get { return mGo.GetComponent<LuaBehaviour>(); } }
 
         public GameObjectModule(GameObject go) {
             mGo = go;
