@@ -5,82 +5,107 @@ using System.Collections;
 namespace M8.Lua {
     [CustomEditor(typeof(LuaBehaviour))]
     public class LuaBehaviourInspector : Editor {
-        private bool mVarFoldout;
+        private bool mVarFoldout = true;
+
+        SerializedProperty loaderOverride;
+        SerializedProperty scriptFrom;
+        SerializedProperty scriptPath;
+        SerializedProperty scriptText;
+        SerializedProperty loadOnAwake;
+        SerializedProperty properties;
+
+        void OnEnable() {
+            loaderOverride = serializedObject.FindProperty("loaderOverride");
+            scriptFrom = serializedObject.FindProperty("scriptFrom");
+            scriptPath = serializedObject.FindProperty("scriptPath");
+            scriptText = serializedObject.FindProperty("scriptText");
+            loadOnAwake = serializedObject.FindProperty("loadOnAwake");
+            properties = serializedObject.FindProperty("properties");
+        }
 
         public override void OnInspectorGUI() {
-            base.OnInspectorGUI();
+            serializedObject.Update();
 
-            LuaBehaviour dat = target as LuaBehaviour;
+            EditorGUILayout.PropertyField(loaderOverride, new GUIContent("Loader Override"));
+
+            GUILayout.BeginVertical(GUI.skin.box);
+
+            EditorGUILayout.PropertyField(scriptFrom);
+
+            LuaBehaviour.LoadFrom curScriptLoadFrom = (LuaBehaviour.LoadFrom)scriptFrom.enumValueIndex;
+
+            switch(curScriptLoadFrom) {
+                case LuaBehaviour.LoadFrom.File:
+                    EditorGUILayout.PropertyField(scriptPath);
+                    EditorGUILayout.PropertyField(loadOnAwake);
+                    break;
+                case LuaBehaviour.LoadFrom.TextAsset:
+                    EditorGUILayout.PropertyField(scriptText);
+                    EditorGUILayout.PropertyField(loadOnAwake);
+                    break;
+            }
+                        
+            GUILayout.EndVertical();
 
             M8.EditorExt.Utility.DrawSeparator();
 
-            mVarFoldout = EditorGUILayout.Foldout(mVarFoldout, "Variables");
+            mVarFoldout = EditorGUILayout.Foldout(mVarFoldout, "Properties");
             if(mVarFoldout) {
-                if(dat.initialVars != null) {
-                    for(int i = 0; i < dat.initialVars.Length; i++) {
-                        LuaBehaviour.Variable var = dat.initialVars[i];
+                for(int i = 0; i < properties.arraySize; i++) {
+                    var elem = properties.GetArrayElementAtIndex(i);
 
-                        GUILayout.BeginHorizontal();
+                    GUILayout.BeginHorizontal();
 
-                        LuaBehaviour.Variable.Type t = (LuaBehaviour.Variable.Type)EditorGUILayout.EnumPopup(var.type, GUILayout.Width(80f));
-                        if(var.type != t) {
-                            var.type = t;
-                            var.Reset();
-                        }
+                    var _type = elem.FindPropertyRelative("type");
 
-                        var.name = EditorGUILayout.TextField(var.name, GUILayout.Width(100f));
-
-                        EditorGUIUtility.labelWidth = 16f;
-
-                        switch(var.type) {
-                            case LuaBehaviour.Variable.Type.Boolean:
-                                var.iVal = EditorGUILayout.Toggle(":", var.iVal != 0) ? 1 : 0;
-                                break;
-                            case LuaBehaviour.Variable.Type.Integer:
-                                var.iVal = EditorGUILayout.IntField(":", var.iVal);
-                                break;
-                            case LuaBehaviour.Variable.Type.Float:
-                                var.fVal = EditorGUILayout.FloatField(":", var.fVal);
-                                break;
-                            case LuaBehaviour.Variable.Type.String:
-                                var.sVal = EditorGUILayout.TextField(":", var.sVal);
-                                break;
-                            case LuaBehaviour.Variable.Type.Object:
-                                var.oVal = EditorGUILayout.ObjectField(":", var.oVal, typeof(Object), true);
-                                break;
-                        }
-
-                        EditorGUIUtility.labelWidth = 0f;
-
-                        if(GUILayout.Button("+", GUILayout.Width(24f))) {
-                            M8.ArrayUtil.InsertAfter(ref dat.initialVars, i, var);
-                            return;
-                        }
-                        if(GUILayout.Button("-", GUILayout.Width(24f))) {
-                            M8.ArrayUtil.RemoveAt(ref dat.initialVars, i);
-                            return;
-                        }
-
-                        GUILayout.EndHorizontal();
-
-                        dat.initialVars[i] = var;
+                    if(EditorGUILayout.PropertyField(_type, new GUIContent(), GUILayout.Width(90f))) {
+                        elem.Reset();
                     }
 
-                    GUILayout.Space(6f);
+                    EditorGUILayout.PropertyField(elem.FindPropertyRelative("name"), new GUIContent(), GUILayout.Width(100f));
+
+                    EditorGUIUtility.labelWidth = 16f;
+
+                    switch((LuaBehaviour.Variable.Type)_type.enumValueIndex) {
+                        case LuaBehaviour.Variable.Type.Boolean:
+                            elem.FindPropertyRelative("iVal").intValue = EditorGUILayout.Toggle(elem.FindPropertyRelative("iVal").intValue > 0) ? 1 : 0;
+                            break;
+                        case LuaBehaviour.Variable.Type.Integer:
+                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("iVal"), new GUIContent());
+                            break;
+                        case LuaBehaviour.Variable.Type.Float:
+                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("fVal"), new GUIContent());
+                            break;
+                        case LuaBehaviour.Variable.Type.String:
+                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("sVal"), new GUIContent());
+                            break;
+                        case LuaBehaviour.Variable.Type.GameObject:
+                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("goVal"), new GUIContent());
+                            break;
+                    }
+
+                    EditorGUIUtility.labelWidth = 0f;
+
+                    if(GUILayout.Button("+", GUILayout.Width(24f))) {
+                        properties.InsertArrayElementAtIndex(i);
+                        break;
+                    }
+                    if(GUILayout.Button("-", GUILayout.Width(24f))) {
+                        properties.DeleteArrayElementAtIndex(i);
+                        break;
+                    }
+
+                    GUILayout.EndHorizontal();
                 }
+
+                GUILayout.Space(6f);
 
                 if(GUILayout.Button("New")) {
-                    if(dat.initialVars != null)
-                        System.Array.Resize(ref dat.initialVars, dat.initialVars.Length+1);
-                    else
-                        dat.initialVars = new LuaBehaviour.Variable[1];
-
-                    GUI.changed = true;
+                    properties.InsertArrayElementAtIndex(properties.arraySize);
                 }
-
-                if(GUI.changed)
-                    EditorUtility.SetDirty(target);
             }
+
+            serializedObject.ApplyModifiedProperties();
         }
     }
 }
