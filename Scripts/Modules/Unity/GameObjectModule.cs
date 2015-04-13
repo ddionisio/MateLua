@@ -6,6 +6,14 @@ namespace M8.Lua.Modules {
     public struct GameObjectModule {
         private GameObject mGo;
         private LuaBehaviour[] mBehaviours;
+
+        public static GameObject Instantiate(GameObject go) {
+            return Object.Instantiate(go) as GameObject;
+        }
+
+        public static GameObject Instantiate(GameObject go, Vector3 pos, Quaternion rot) {
+            return Object.Instantiate(go, pos, rot) as GameObject;
+        }
                 
         public string name { get { return mGo.name; } }
         public bool activeSelf { get { return mGo.activeSelf; } }

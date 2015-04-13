@@ -66,23 +66,42 @@ namespace M8.Lua {
 
                     EditorGUIUtility.labelWidth = 16f;
 
-                    switch((LuaBehaviour.Variable.Type)_type.enumValueIndex) {
-                        case LuaBehaviour.Variable.Type.Boolean:
-                            elem.FindPropertyRelative("iVal").intValue = EditorGUILayout.Toggle(elem.FindPropertyRelative("iVal").intValue > 0) ? 1 : 0;
+                    Vector4 vVal = elem.FindPropertyRelative("vVal").vector4Value;
+
+                    switch((SerializedVariable.Type)_type.enumValueIndex) {
+                        case SerializedVariable.Type.Boolean:
+                            elem.FindPropertyRelative("iVal").intValue = EditorGUILayout.Toggle(":", elem.FindPropertyRelative("iVal").intValue > 0) ? 1 : 0;
                             break;
-                        case LuaBehaviour.Variable.Type.Integer:
-                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("iVal"), new GUIContent());
+                        case SerializedVariable.Type.Integer:
+                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("iVal"), new GUIContent(":"));
                             break;
-                        case LuaBehaviour.Variable.Type.Float:
-                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("fVal"), new GUIContent());
+                        case SerializedVariable.Type.Float:
+                            vVal.x = EditorGUILayout.FloatField(":", vVal.x);
                             break;
-                        case LuaBehaviour.Variable.Type.String:
-                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("sVal"), new GUIContent());
+                        case SerializedVariable.Type.Vector2:
+                            Vector2 v2 = EditorGUILayout.Vector2Field(":", new Vector2(vVal.x, vVal.y));
+                            vVal.x = v2.x; vVal.y = v2.y;
                             break;
-                        case LuaBehaviour.Variable.Type.GameObject:
-                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("goVal"), new GUIContent());
+                        case SerializedVariable.Type.Vector3:
+                            Vector3 v3 = EditorGUILayout.Vector3Field(":", new Vector3(vVal.x, vVal.y, vVal.z));
+                            vVal.x = v3.x; vVal.y = v3.y; vVal.z = v3.z;
+                            break;
+                        case SerializedVariable.Type.Vector4:
+                            vVal = EditorGUILayout.Vector4Field(":", vVal);
+                            break;
+                        case SerializedVariable.Type.Rotation:
+                            Vector3 r = EditorGUILayout.Vector3Field(":", new Vector3(vVal.x, vVal.y, vVal.z));
+                            vVal.x = r.x; vVal.y = r.y; vVal.z = r.z;
+                            break;
+                        case SerializedVariable.Type.String:
+                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("sVal"), new GUIContent(":"));
+                            break;
+                        case SerializedVariable.Type.GameObject:
+                            EditorGUILayout.PropertyField(elem.FindPropertyRelative("goVal"), new GUIContent(":"));
                             break;
                     }
+
+                    elem.FindPropertyRelative("vVal").vector4Value = vVal;
 
                     EditorGUIUtility.labelWidth = 0f;
 

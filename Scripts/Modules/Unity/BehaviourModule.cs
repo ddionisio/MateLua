@@ -16,13 +16,14 @@ namespace M8.Lua.Modules {
         public GameObject gameObject { get { return mBehaviour.gameObject; } }
         public DynValue globals { get { return DynValue.NewTable(mBehaviour.script.Globals); } }
 
-        public UnityEngine.Coroutine Invoke(DynValue func, DynValue param) {
+        public UnityEngine.Coroutine Invoke(CallbackArguments args) {
+            DynValue func = args[0];
             if(func.Type == DataType.String) {
                 //try to grab from global
                 func = mBehaviour.script.Globals.Get(func);
             }
 
-            return mBehaviour.StartCoroutine(InvokeRoutine(mBehaviour.script, mBehaviour, func, param));
+            return mBehaviour.StartCoroutine(InvokeRoutine(mBehaviour.script, mBehaviour, func, args.GetArray(1)));
         }
 
         public void CancelInvoke(UnityEngine.Coroutine coro) {

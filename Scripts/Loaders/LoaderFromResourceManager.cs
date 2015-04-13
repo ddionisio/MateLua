@@ -1,15 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class LoaderFromResourceManager : MonoBehaviour {
+namespace M8.Lua {
+    public class LoaderFromResourceManager : LoaderBase {
+        public override bool ScriptFileExists(string file) {
+            throw new System.NotImplementedException();
+        }
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+        public override object LoadFile(string file, MoonSharp.Interpreter.Table globalContext) {
+            throw new System.NotImplementedException();
+        }
+    }
 }

@@ -10,64 +10,10 @@ namespace M8.Lua {
 
     [AddComponentMenu("M8/Lua/Behaviour")]
     public class LuaBehaviour : MonoBehaviour {
-        public const string luaPropertiesTable = "properties";
-
-        public const string luaFuncAwake = "Awake";
-        public const string luaFuncStart = "Start";
-        public const string luaFuncOnEnable = "OnEnable";
-        public const string luaFuncOnDisable = "OnDisable";
-        public const string luaFuncOnDestroy = "OnDestroy";
-
         public enum LoadFrom {
             String,
             File,
             TextAsset,
-        }
-
-        [Serializable]
-        public struct Variable {
-            public enum Type {
-                Boolean,
-                Integer,
-                Float,
-                String,
-                GameObject,
-            }
-
-            public string name;
-            public Type type;
-
-            public int iVal;
-            public float fVal;
-            public string sVal;
-            public GameObject goVal;
-
-            public void Reset() {
-                iVal = 0;
-                fVal = 0f;
-                sVal = "";
-                goVal = null;
-            }
-
-            public void AddToTable(Table t) {
-                switch(type) {
-                    case Type.Boolean:
-                        t[name] = iVal > 0;
-                        break;
-                    case Type.Integer:
-                        t[name] = iVal;
-                        break;
-                    case Type.Float:
-                        t[name] = fVal;
-                        break;
-                    case Type.String:
-                        t[name] = sVal;
-                        break;
-                    case Type.GameObject:
-                        t[name] = goVal;
-                        break;
-                }
-            }
         }
 
         public LoaderBase loaderOverride;
@@ -85,15 +31,15 @@ namespace M8.Lua {
         bool loadOnAwake = true;
 
         [SerializeField]
-        Variable[] properties; //added to the lua environment before executing script
+        SerializedVariable[] properties; //added to the lua environment before executing script
 
         private Script mScript;
         private DynValue mScriptResult;
 
         private string mScriptString; //code from runtime
 
-        private object mScriptFuncEnable;
-        private object mScriptFuncDisable;
+        private DynValue mScriptFuncEnable;
+        private DynValue mScriptFuncDisable;
 
         private bool mIsAwake;
 
@@ -148,7 +94,7 @@ namespace M8.Lua {
             //add properties
             if(properties != null) {
                 Table propTable = new Table(mScript);
-                mScript.Globals[luaPropertiesTable] = propTable;
+                mScript.Globals[Const.luaPropertiesTable] = propTable;
 
                 for(int i = 0; i < properties.Length; i++)
                     properties[i].AddToTable(propTable);
@@ -192,12 +138,12 @@ namespace M8.Lua {
                     m.PostLoad(mScript);
             }
 
-            mScriptFuncEnable = mScript.Globals[luaFuncOnEnable];
-            mScriptFuncDisable = mScript.Globals[luaFuncOnDisable];
+            mScriptFuncEnable = mScript.Globals.Get(Const.luaFuncOnEnable);
+            mScriptFuncDisable = mScript.Globals.Get(Const.luaFuncOnDisable);
 
             //awake
-            object awakeFunc = mScript.Globals[luaFuncAwake];
-            if(awakeFunc != null) {
+            var awakeFunc = mScript.Globals.Get(Const.luaFuncAwake);
+            if(awakeFunc.IsNotNil()) {
                 try {
                     mScript.Call(awakeFunc);
                 }
@@ -212,7 +158,7 @@ namespace M8.Lua {
         }
 
         void OnEnable() {
-            if(mScriptFuncEnable != null) {
+            if(mScriptFuncEnable.IsNotNil()) {
                 try {
                     mScript.Call(mScriptFuncEnable);
                 }
@@ -223,7 +169,7 @@ namespace M8.Lua {
         }
 
         void OnDisable() {
-            if(mScriptFuncDisable != null) {
+            if(mScriptFuncDisable.IsNotNil()) {
                 try {
                     mScript.Call(mScriptFuncDisable);
                 }
@@ -234,8 +180,8 @@ namespace M8.Lua {
         }
 
         void OnDestroy() {
-            object destroyFunc = mScript.Globals[luaFuncOnDestroy];
-            if(destroyFunc != null) {
+            var destroyFunc = mScript.Globals.Get(Const.luaFuncOnDestroy);
+            if(destroyFunc.IsNotNil()) {
                 try {
                     mScript.Call(destroyFunc);
                 }
@@ -260,8 +206,8 @@ namespace M8.Lua {
         }
 
         IEnumerator Start() {
-            DynValue startFunc = mScript.Globals.Get(luaFuncStart);
-            if(!startFunc.IsNilOrNan())
+            DynValue startFunc = mScript.Globals.Get(Const.luaFuncStart);
+            if(startFunc.IsNotNil())
                 yield return StartCoroutine(BehaviourModule.InvokeRoutine(mScript, this, startFunc));
         }
     }
