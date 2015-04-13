@@ -12,7 +12,7 @@ namespace M8.Lua {
 
             table["Mate"] = mateVal;
 
-            //if(modules.Check(MateCoreModules.Input)) mateTable.RegisterMateInput();
+            if(modules.Check(MateCoreModules.Input)) Modules.MateInputModule.Register(mateTable);
 
             return table;
         }

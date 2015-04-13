@@ -77,16 +77,32 @@ namespace M8.Lua {
             Component[] comps = GetComponentsInChildren<Component>(true);
 
             //initialize script
-            CoreModules coreModules = GlobalSettings.instance ? GlobalSettings.instance.coreModules : GlobalSettings.coreModuleDefault;
-            UnityCoreModules unityCoreModules = GlobalSettings.instance ? GlobalSettings.instance.unityCoreModules : GlobalSettings.unityCoreModuleDefault;
+            CoreModules coreModules;
+            UnityCoreModules unityCoreModules;
+            MateCoreModules mateCoreModules;
 
+            var settings = GlobalSettings.instance;
+            if(settings) {
+                coreModules = settings.coreModules;
+                unityCoreModules = settings.unityCoreModules;
+                mateCoreModules = settings.mateCoreModules;
+            }
+            else {
+                coreModules = GlobalSettings.coreModuleDefault;
+                unityCoreModules = GlobalSettings.unityCoreModuleDefault;
+                mateCoreModules = 0;
+            }
+            
             mScript = new Script(coreModules);
+
+            //add core modules
             mScript.Globals.RegisterUnityCoreModules(unityCoreModules);
+            mScript.Globals.RegisterMateCoreModules(mateCoreModules);
 
             if(loaderOverride)
                 mScript.Options.ScriptLoader = loaderOverride;
 
-            //add core component modules
+            //add component modules
             GameObjectModule.Register(mScript.Globals, gameObject);
             TransformModule.Register(mScript.Globals, transform);
             BehaviourModule.Register(mScript.Globals, this);

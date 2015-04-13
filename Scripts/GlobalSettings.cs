@@ -15,6 +15,8 @@ namespace M8.Lua {
 
         public CoreModules coreModules = coreModuleDefault;
         public UnityCoreModules unityCoreModules = unityCoreModuleDefault;
+        public MateCoreModules mateCoreModules;
+
         public LoaderBase loader;
 
         protected override void OnInstanceInit() {
