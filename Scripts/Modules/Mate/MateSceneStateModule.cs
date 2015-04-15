@@ -5,10 +5,15 @@ using System.Collections.Generic;
 using MoonSharp.Interpreter;
 
 namespace M8.Lua.Modules {
+    /// <summary>
+    /// Note: for events, use .add and .remove (valueChangeCallback)
+    /// </summary>
     public class MateSceneStateModule {
+        public delegate void OnStateChange(string key, DynValue val);
+
         private SceneState.Table mTable;
-        private Script mScript;
-        private Dictionary<DynValue, SceneState.StateCallback> mBinds;
+
+        public event OnStateChange valueChangeCallback;
 
         public DynValue this[DynValue index] {
             get {
@@ -109,77 +114,32 @@ namespace M8.Lua.Modules {
             mTable.SnapshotDelete();
         }
 
-        /// <summary>
-        /// first param is func, the rest is whatever
-        /// </summary>
-        /// <param name="args"></param>
-        public void AddValueChangeCall(CallbackArguments args) {
-            DynValue luaFunc = args[0];
+        public MateSceneStateModule(SceneState.Table table) {
+            mTable = table;
+            mTable.onValueChange += OnValueChange;
+        }
 
-            //setup parameters, first element will be name, second is the value, the rest is whatever
-            DynValue[] parms = new DynValue[args.Count + 1];
-            System.Array.Copy(args.GetArray(1), 0, parms, 2, args.Count - 1);
+        private void OnValueChange(string name, SceneState.StateValue val) {
+            if(valueChangeCallback != null) {
+                DynValue luaVal;
 
-            if(luaFunc.Type == DataType.String)
-                luaFunc = mScript.Globals.Get(luaFunc);
-
-            SceneState.StateCallback func = delegate(string name, SceneState.StateValue val) {
-                parms[0] = DynValue.NewString(name);
-                
                 switch(val.type) {
                     case SceneState.Type.Integer:
-                        parms[1] = DynValue.NewNumber(val.ival);
+                        luaVal = DynValue.NewNumber(val.ival);
                         break;
                     case SceneState.Type.Float:
-                        parms[1] = DynValue.NewNumber(val.fval);
+                        luaVal = DynValue.NewNumber(val.fval);
                         break;
                     case SceneState.Type.String:
-                        parms[1] = DynValue.NewString(val.sval);
+                        luaVal = DynValue.NewString(val.sval);
                         break;
                     default:
-                        parms[1] = DynValue.NewNil();
+                        luaVal = DynValue.NewNil();
                         break;
                 }
 
-                try {
-                    mScript.Call(luaFunc, parms);
-                }
-                catch(InterpreterException ie) {
-                    Debug.LogError(ie.DecoratedMessage);
-                }
-            };
-
-            if(mBinds.ContainsKey(luaFunc)) {
-                mTable.onValueChange -= mBinds[luaFunc];
-                mBinds[luaFunc] = func;
+                valueChangeCallback(name, luaVal);
             }
-            else
-                mBinds.Add(luaFunc, func);
-
-            mTable.onValueChange += func;
-        }
-
-        public void RemoveValueChangeCall(DynValue luaFunc) {
-            if(luaFunc.Type == DataType.String)
-                luaFunc = mScript.Globals.Get(luaFunc);
-
-            SceneState.StateCallback func;
-            if(mBinds.TryGetValue(luaFunc, out func)) {
-                mTable.onValueChange -= func;
-                mBinds.Remove(luaFunc);
-            }
-        }
-
-        public void ClearValueChangeCalls() {
-            foreach(var pair in mBinds)
-                mTable.onValueChange -= pair.Value;
-            mBinds.Clear();
-        }
-
-        public MateSceneStateModule(Script script, SceneState.Table table) {
-            mScript = script;
-            mTable = table;
-            mBinds = new Dictionary<DynValue, SceneState.StateCallback>();
         }
 
         private static bool _isTypeRegistered = false;
@@ -189,14 +149,14 @@ namespace M8.Lua.Modules {
                 _isTypeRegistered = true;
             }
 
-            DynValue stateTableVal = table.Get("Scene");
+            DynValue stateTableVal = table.Get(Const.luaMateSceneTable);
             if(stateTableVal.IsNil())
-                table.Set("Scene", stateTableVal = DynValue.NewTable(table.OwnerScript));
+                table.Set(Const.luaMateSceneTable, stateTableVal = DynValue.NewTable(table.OwnerScript));
 
             Table stateTable = stateTableVal.Table;
 
-            stateTable["Locals"] = new MateSceneStateModule(table.OwnerScript, SceneState.instance.local);
-            stateTable["Globals"] = new MateSceneStateModule(table.OwnerScript, SceneState.instance.global);
+            stateTable["Locals"] = new MateSceneStateModule(SceneState.instance.local);
+            stateTable["Globals"] = new MateSceneStateModule(SceneState.instance.global);
         }
     }
 }

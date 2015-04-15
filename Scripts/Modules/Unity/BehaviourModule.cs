@@ -59,8 +59,7 @@ namespace M8.Lua.Modules {
                     coFunc = script.CreateCoroutine(func);
                     break;
                 default:
-                    Debug.LogError(string.Format("'{0}' ({1}) is not a valid function/coroutine.", func, func.Type));
-                    yield break;
+                    throw new ScriptRuntimeException(string.Format("'{0}' ({1}) is not a valid function/coroutine.", func, func.Type));
             }
 
             var routine = coFunc.Coroutine;

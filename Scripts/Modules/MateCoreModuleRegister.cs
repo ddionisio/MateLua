@@ -14,6 +14,7 @@ namespace M8.Lua {
 
             if(modules.Check(MateCoreModules.Input)) Modules.MateInputModule.Register(mateTable);
             if(modules.Check(MateCoreModules.SceneState)) Modules.MateSceneStateModule.Register(mateTable);
+            if(modules.Check(MateCoreModules.SceneManager)) Modules.MateSceneManagerModule.Register(mateTable);
 
             return table;
         }

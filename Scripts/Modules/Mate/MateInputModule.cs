@@ -29,6 +29,12 @@ namespace M8.Lua.Modules {
     /// Note: index start is 1, for lua consistency
     /// </summary>
     public class MateInputModule {
+        public struct BindKey {
+            public DynValue func;
+            public int action;
+            public int player;
+        }
+
         public static int actionCount { get { return InputManager.instance.actionCount; } }
 
         public static int GetActionIndex(string actionName) {
@@ -93,34 +99,24 @@ namespace M8.Lua.Modules {
         }
 
         private Script mScript;
-        private Dictionary<DynValue, InputManager.OnButton> mBinds;
+        private Dictionary<BindKey, InputManager.OnButton> mBinds;
 
         public MateInputModule(Script script) {
             mScript = script;
-            mBinds = new Dictionary<DynValue, InputManager.OnButton>();
+            mBinds = new Dictionary<BindKey, InputManager.OnButton>();
         }
 
         /// <summary>
         /// ensure the first 3 params are: player, action, function
         /// </summary>
-        public void AddButtonCall(CallbackArguments args) {
-            int player = System.Convert.ToInt32(args[0].Number);
-
-            int action;
-
-            DynValue actionVal = args[1];
-            if(actionVal.Type == DataType.String) {
-                action = GetActionIndex(actionVal.String);
-            }
+        public void AddButtonCall(int player, DynValue action, DynValue luaFunc) {
+            int actionInd;
+            if(action.Type == DataType.String)
+                actionInd = GetActionIndex(action.String);
+            else if(action.Type == DataType.Number)
+                actionInd = System.Convert.ToInt32(action.Number);
             else
-                action = System.Convert.ToInt32(actionVal.CastToNumber());
-            
-
-            DynValue luaFunc = args[2];
-
-            //setup parameters, first element will be MateInputInfo
-            DynValue[] parms = new DynValue[args.Count-3+1];
-            System.Array.Copy(args.GetArray(3), 0, parms, 1, parms.Length - 1);
+                throw new ScriptRuntimeException(string.Format("Invalid action: {0} ({1}) is not a string or number.", action, action.Type));
 
             if(luaFunc.Type == DataType.String)
                 luaFunc = mScript.Globals.Get(luaFunc);
@@ -133,8 +129,8 @@ namespace M8.Lua.Modules {
                     func = delegate(InputManager.Info inf) {
                         try {
                             //call lua function with parameters, first being the info
-                            parms[0] = DynValue.FromObject(mScript, new MateInputInfo(inf));
-                            mScript.Call(luaFunc, parms);
+                            DynValue luaInfo = DynValue.FromObject(mScript, new MateInputInfo(inf));
+                            mScript.Call(luaFunc, luaInfo);
                         }
                         catch(InterpreterException ie) {
                             Debug.LogError(ie.DecoratedMessage);
@@ -143,32 +139,42 @@ namespace M8.Lua.Modules {
                     break;
 
                 default:
-                    Debug.LogError(string.Format("{0} ({1}) is not a function or routine.", luaFunc, luaFunc.Type));
-                    return;
+                    throw new ScriptRuntimeException(string.Format("{0} ({1}) is not a function or routine.", luaFunc, luaFunc.Type));
             }
 
-            if(mBinds.ContainsKey(luaFunc)) {
-                InputManager.instance.RemoveButtonCall(mBinds[luaFunc]);
-                mBinds[luaFunc] = func;
-            }
-            else
-                mBinds.Add(luaFunc, func);
+            BindKey key = new BindKey() { func=luaFunc, player=player, action=actionInd };
 
-            InputManager.instance.AddButtonCall(player, action, func);
+            if(!mBinds.ContainsKey(key)) {
+                mBinds.Add(key, func);
+                InputManager.instance.AddButtonCall(player, actionInd, func);
+            }
         }
 
-        public void RemoveButtonCall(DynValue luaFunc) {
+        public void RemoveButtonCall(int player, DynValue action, DynValue luaFunc) {
+            int actionInd;
+            if(action.Type == DataType.String)
+                actionInd = GetActionIndex(action.String);
+            else if(action.Type == DataType.Number)
+                actionInd = System.Convert.ToInt32(action.Number);
+            else
+                throw new ScriptRuntimeException(string.Format("Invalid action: {0} ({1}) is not a string or number.", action, action.Type));
+
+            if(luaFunc.Type == DataType.String)
+                luaFunc = mScript.Globals.Get(luaFunc);
+
+            BindKey key = new BindKey() { func=luaFunc, player=player, action=actionInd };
+
             InputManager.OnButton func;
-            if(mBinds.TryGetValue(luaFunc, out func)) {
-                InputManager.instance.RemoveButtonCall(func);
-                mBinds.Remove(luaFunc);
+            if(mBinds.TryGetValue(key, out func)) {
+                InputManager.instance.RemoveButtonCall(player, actionInd, func);
+                mBinds.Remove(key);
             }
         }
 
         public void ClearButtonCalls() {
             var input = InputManager.instance;
             foreach(var pair in mBinds)
-                input.RemoveButtonCall(pair.Value);
+                input.RemoveButtonCall(pair.Key.player, pair.Key.action, pair.Value);
 
             mBinds.Clear();
         }

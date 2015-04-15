@@ -1,6 +1,7 @@
 ﻿
 namespace M8.Lua {
     public struct Const {
+        public const string luaMateSceneTable = "Scene";
         public const string luaPropertiesTable = "properties";
 
         public const string luaFuncAwake = "Awake";
