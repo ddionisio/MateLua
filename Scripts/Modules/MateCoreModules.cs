@@ -5,6 +5,8 @@
         Localizer = 0x2,
         SceneManager = 0x4,
         SceneState = 0x8,
+        PoolController = 0x10,
+        UserData = 0x20
     }
 
     internal static class MateCoreModules_Ext {

@@ -16,6 +16,9 @@ namespace M8.Lua {
             dat.mateCoreModules = (MateCoreModules)EditorGUILayout.EnumMaskField("Mate Core Modules", dat.mateCoreModules);
 
             dat.loader = EditorGUILayout.ObjectField("Script Loader", dat.loader, typeof(LoaderBase), false) as LoaderBase;
+
+            if(GUI.changed)
+                EditorUtility.SetDirty(dat);
         }
     }
 }

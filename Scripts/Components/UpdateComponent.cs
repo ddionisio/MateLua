@@ -16,8 +16,10 @@ namespace M8.Lua.Components {
         void IInitialization.PostLoad(Script s) {
             mScript = s;
             mUpdate = s.Globals.Get(Const.luaFuncUpdate);
-            if(mUpdate.IsNilOrNan())
+            if(mUpdate.IsNilOrNan()) {
+                enabled = false;
                 Debug.LogError(string.Format("{0} not found.", Const.luaFuncUpdate));
+            }
         }
 
         void Update() {

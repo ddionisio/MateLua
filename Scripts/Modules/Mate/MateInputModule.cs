@@ -105,7 +105,16 @@ namespace M8.Lua.Modules {
         /// </summary>
         public void AddButtonCall(CallbackArguments args) {
             int player = System.Convert.ToInt32(args[0].Number);
-            int action = System.Convert.ToInt32(args[1].Number);
+
+            int action;
+
+            DynValue actionVal = args[1];
+            if(actionVal.Type == DataType.String) {
+                action = GetActionIndex(actionVal.String);
+            }
+            else
+                action = System.Convert.ToInt32(actionVal.CastToNumber());
+            
 
             DynValue luaFunc = args[2];
 
@@ -154,6 +163,14 @@ namespace M8.Lua.Modules {
                 InputManager.instance.RemoveButtonCall(func);
                 mBinds.Remove(luaFunc);
             }
+        }
+
+        public void ClearButtonCalls() {
+            var input = InputManager.instance;
+            foreach(var pair in mBinds)
+                input.RemoveButtonCall(pair.Value);
+
+            mBinds.Clear();
         }
 
         private static bool _isTypeRegistered = false;
