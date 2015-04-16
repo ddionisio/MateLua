@@ -17,6 +17,7 @@ namespace M8.Lua {
             if(modules.Check(MateCoreModules.SceneManager)) Modules.MateSceneManagerModule.Register(mateTable);
             if(modules.Check(MateCoreModules.Localizer)) Modules.MateLocalizeModule.Register(mateTable);
             if(modules.Check(MateCoreModules.UserData)) Modules.MateUserDataModule.Register(mateTable);
+            if(modules.Check(MateCoreModules.PoolController)) Modules.MatePoolModule.Register(mateTable);
 
             return table;
         }

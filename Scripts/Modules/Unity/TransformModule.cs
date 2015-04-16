@@ -10,6 +10,8 @@ namespace M8.Lua.Modules {
             mTrans = t;
         }
 
+        public GameObject gameObject { get { return mTrans.gameObject; } }
+
         public int childCount { get { return mTrans.childCount; } }
         public Vector3 eulerAngles { get { return mTrans.eulerAngles; } set { mTrans.eulerAngles = value; } }
         public Vector3 forward { get { return mTrans.forward; } set { mTrans.forward = value; } }
