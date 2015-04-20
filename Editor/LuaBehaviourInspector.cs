@@ -7,6 +7,7 @@ namespace M8.Lua {
     public class LuaBehaviourInspector : Editor {
         private bool mVarFoldout = true;
 
+        SerializedProperty _name;
         SerializedProperty loaderOverride;
         SerializedProperty scriptFrom;
         SerializedProperty scriptPath;
@@ -15,6 +16,7 @@ namespace M8.Lua {
         SerializedProperty properties;
 
         void OnEnable() {
+            _name = serializedObject.FindProperty("name");
             loaderOverride = serializedObject.FindProperty("loaderOverride");
             scriptFrom = serializedObject.FindProperty("scriptFrom");
             scriptPath = serializedObject.FindProperty("scriptPath");
@@ -26,7 +28,9 @@ namespace M8.Lua {
         public override void OnInspectorGUI() {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(loaderOverride, new GUIContent("Loader Override"));
+            EditorGUILayout.PropertyField(_name);
+
+            EditorGUILayout.PropertyField(loaderOverride);
 
             GUILayout.BeginVertical(GUI.skin.box);
 
@@ -38,10 +42,19 @@ namespace M8.Lua {
                 case LuaBehaviour.LoadFrom.File:
                     EditorGUILayout.PropertyField(scriptPath);
                     EditorGUILayout.PropertyField(loadOnAwake);
+
+                    scriptText.objectReferenceValue = null;
                     break;
                 case LuaBehaviour.LoadFrom.TextAsset:
                     EditorGUILayout.PropertyField(scriptText);
                     EditorGUILayout.PropertyField(loadOnAwake);
+
+                    scriptPath.stringValue = "";
+                    break;
+
+                case LuaBehaviour.LoadFrom.String:
+                    scriptText.objectReferenceValue = null;
+                    scriptPath.stringValue = "";
                     break;
             }
                         
@@ -125,6 +138,18 @@ namespace M8.Lua {
             }
 
             serializedObject.ApplyModifiedProperties();
+
+            //runtime controls
+            if(Application.isPlaying) {
+                LuaBehaviour dat = target as LuaBehaviour;
+
+                M8.EditorExt.Utility.DrawSeparator();
+
+                //load
+                if(GUILayout.Button(dat.isLoaded ? "Reload" : "Load")) {
+                    dat.Load();
+                }
+            }
         }
     }
 }

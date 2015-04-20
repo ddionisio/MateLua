@@ -16,6 +16,8 @@ namespace M8.Lua {
             TextAsset,
         }
 
+        public new string name;
+
         public LoaderBase loaderOverride;
 
         [SerializeField]
@@ -41,25 +43,34 @@ namespace M8.Lua {
         private DynValue mScriptFuncEnable;
         private DynValue mScriptFuncDisable;
 
-        private bool mIsAwake;
+        private bool mIsAwake = false;
+        private bool mIsRestart = false;
 
         public Script script { get { return mScript; } }
 
         public DynValue result { get { return mScriptResult; } }
 
+        public bool isLoaded { get { return mScript != null; } }
+
         public void SetSourceFromString(string s) {
             scriptFrom = LoadFrom.String;
+            scriptPath = "";
+            scriptText = null;
             mScriptString = s;
         }
 
         public void SetSourceFromFile(string path) {
             scriptFrom = LoadFrom.File;
             scriptPath = path;
+            scriptText = null;
+            mScriptString = "";
         }
 
         public void SetSourceFromTextAsset(TextAsset text) {
             scriptFrom = LoadFrom.TextAsset;
+            scriptPath = "";
             scriptText = text;
+            mScriptString = "";
         }
 
         /// <summary>
@@ -103,7 +114,7 @@ namespace M8.Lua {
                 mScript.Options.ScriptLoader = loaderOverride;
 
             //add component modules
-            GameObjectModule.Register(mScript.Globals, gameObject);
+            GameObjectModule.Register(mScript.Globals, gameObject, this);
             TransformModule.Register(mScript.Globals, transform);
             BehaviourModule.Register(mScript.Globals, this);
 
@@ -169,23 +180,32 @@ namespace M8.Lua {
             }
 
             //manually enable if we are instantiated before, and are active on scene
-            if(mIsAwake && enabled && gameObject.activeInHierarchy)
-                OnEnable();
+            if(mIsAwake) {
+                mIsRestart = true;
+
+                if(enabled && gameObject.activeInHierarchy)
+                    OnEnable();
+            }
         }
 
         void OnEnable() {
-            if(mScriptFuncEnable.IsNotNil()) {
+            if(mScriptFuncEnable != null && mScriptFuncEnable.IsNotNil()) {
                 try {
                     mScript.Call(mScriptFuncEnable);
                 }
                 catch(InterpreterException ie) {
                     Debug.LogError(ie.DecoratedMessage);
                 }
+
+                if(mIsRestart) {
+                    StartCoroutine(Start());
+                    mIsRestart = false;
+                }
             }
         }
 
         void OnDisable() {
-            if(mScriptFuncDisable.IsNotNil()) {
+            if(mScriptFuncDisable != null && mScriptFuncDisable.IsNotNil()) {
                 try {
                     mScript.Call(mScriptFuncDisable);
                 }
@@ -196,13 +216,15 @@ namespace M8.Lua {
         }
 
         void OnDestroy() {
-            var destroyFunc = mScript.Globals.Get(Const.luaFuncOnDestroy);
-            if(destroyFunc.IsNotNil()) {
-                try {
-                    mScript.Call(destroyFunc);
-                }
-                catch(InterpreterException ie) {
-                    Debug.LogError(ie.DecoratedMessage);
+            if(mScript != null) {
+                var destroyFunc = mScript.Globals.Get(Const.luaFuncOnDestroy);
+                if(destroyFunc.IsNotNil()) {
+                    try {
+                        mScript.Call(destroyFunc);
+                    }
+                    catch(InterpreterException ie) {
+                        Debug.LogError(ie.DecoratedMessage);
+                    }
                 }
             }
         }
@@ -222,9 +244,11 @@ namespace M8.Lua {
         }
 
         IEnumerator Start() {
-            DynValue startFunc = mScript.Globals.Get(Const.luaFuncStart);
-            if(startFunc.IsNotNil())
-                yield return StartCoroutine(BehaviourModule.InvokeRoutine(mScript, this, startFunc));
+            if(mScript != null) {
+                DynValue startFunc = mScript.Globals.Get(Const.luaFuncStart);
+                if(startFunc.IsNotNil())
+                    yield return StartCoroutine(BehaviourModule.InvokeRoutine(mScript, this, startFunc));
+            }
         }
     }
 }
