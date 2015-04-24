@@ -31,6 +31,11 @@ your own IScriptLoader (possibly extending ScriptLoaderBase).", file, rootDir));
             return ret;
         }
 
+        public override void ClearCache(string file) {
+            file = GetPath(file);
+            mResources.Remove(file);
+        }
+
         private string LoadAsset(string path) {
             string ret = null;
 

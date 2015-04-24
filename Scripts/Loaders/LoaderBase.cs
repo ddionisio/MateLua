@@ -33,6 +33,11 @@ namespace M8.Lua {
         public abstract object LoadFile(string file, Table globalContext);
 
         /// <summary>
+        /// Clear cached script of a given file if applicable.
+        /// </summary>
+        public virtual void ClearCache(string file) { }
+
+        /// <summary>
         /// Resolves the name of a module on a set of paths.
         /// </summary>
         /// <param name="modname">The modname.</param>

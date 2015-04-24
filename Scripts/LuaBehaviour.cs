@@ -52,6 +52,12 @@ namespace M8.Lua {
 
         public bool isLoaded { get { return mScript != null; } }
 
+        public LoaderBase loader {
+            get {
+                return loaderOverride ? loaderOverride : Script.DefaultOptions.ScriptLoader as LoaderBase;
+            }
+        }
+
         public void SetSourceFromString(string s) {
             scriptFrom = LoadFrom.String;
             scriptPath = "";

@@ -192,6 +192,13 @@ namespace M8.Lua {
 
                 //load
                 if(GUILayout.Button(dat.isLoaded ? "Reload" : "Load")) {
+                    //clear any cache if loading from file
+                    if(curScriptLoadFrom == LuaBehaviour.LoadFrom.File) {
+                        LoaderBase loader = dat.loader;
+                        if(loader)
+                            loader.ClearCache(scriptPath.stringValue);
+                    }
+
                     dat.Load();
                 }
             }
