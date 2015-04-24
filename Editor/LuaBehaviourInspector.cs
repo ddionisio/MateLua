@@ -25,6 +25,35 @@ namespace M8.Lua {
             properties = serializedObject.FindProperty("properties");
         }
 
+        void EditExternal(string path) {
+            string externEditPath = EditorPrefs.GetString(LuaScriptsProcess.externalEditorKey, "");
+
+            bool lastEnabled = GUI.enabled;
+            GUI.enabled = !string.IsNullOrEmpty(externEditPath) && !string.IsNullOrEmpty(path);
+
+            if(M8.EditorExt.Utility.DrawSimpleButton("E", "Edit from external")) {
+                string filePath = LuaScriptsProcess.GetSourcePath(path);
+
+                try {
+                    string args = EditorPrefs.GetString(LuaScriptsProcess.externalEditorArgFormatKey, "{0}");
+                    System.Diagnostics.Process.Start(externEditPath, string.Format(args, string.Format("\"{0}\"", filePath)));
+                }
+                catch(System.Exception e) {
+                    Debug.LogError(e);
+                }
+            }
+
+            GUI.enabled = lastEnabled;
+        }
+
+        void OnPathSelect(LuaScriptsBrowser dlg, string path) {
+            dlg.selectCallback -= OnPathSelect;
+
+            scriptPath.stringValue = path;
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
         public override void OnInspectorGUI() {
             serializedObject.Update();
 
@@ -40,7 +69,23 @@ namespace M8.Lua {
 
             switch(curScriptLoadFrom) {
                 case LuaBehaviour.LoadFrom.File:
+                    GUILayout.BeginHorizontal();
+                    
                     EditorGUILayout.PropertyField(scriptPath);
+
+                    if(M8.EditorExt.Utility.DrawSimpleButton("...", "Browse Scripts")) {
+                        LuaScriptsBrowser dlg = LuaScriptsBrowser.Open();
+                        dlg.selectCallback += OnPathSelect;
+                        dlg.Select(scriptPath.stringValue);
+                    }
+                    
+                    EditExternal(scriptPath.stringValue);
+
+                    if(M8.EditorExt.Utility.DrawSimpleButton("o", "Ping Location"))
+                        LuaScriptsProcess.PingSourcePath(scriptPath.stringValue);
+                    
+                    GUILayout.EndHorizontal();
+
                     EditorGUILayout.PropertyField(loadOnAwake);
 
                     scriptText.objectReferenceValue = null;
@@ -57,7 +102,7 @@ namespace M8.Lua {
                     scriptPath.stringValue = "";
                     break;
             }
-                        
+
             GUILayout.EndVertical();
 
             M8.EditorExt.Utility.DrawSeparator();
