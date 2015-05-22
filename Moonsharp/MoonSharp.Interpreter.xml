@@ -222,6 +222,278 @@
             The metamethod name (like '__div', '__ipairs', etc.)
             </summary>
         </member>
+        <member name="T:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor">
+            <summary>
+            Base interface to describe access to members of a given type.
+            While it's not infrastructural to implement custom type descriptors, it's needed for 
+            classes extending <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor"/>.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
+            <summary>
+            Gets the value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/> to be exposed to scripts.
+            Implementors should raise exceptions if the value cannot be read or if access to an
+            instance member through a static userdata is attempted.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <returns>The value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/>.</returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Sets the value of this member from a <see cref="T:MoonSharp.Interpreter.DynValue"/>.
+            Implementors should raise exceptions if the value cannot be read or if access to an
+            instance member through a static userdata is attempted.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <param name="value">The value to be set.</param>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor.IsStatic">
+            <summary>
+            Gets a value indicating whether the described member is static.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor.Name">
+            <summary>
+            Gets the name of the member
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor.MemberAccess">
+            <summary>
+            Gets the types of access supported by this member
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor">
+            <summary>
+            Extension methods for <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor"/> and <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess"/> .
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor.HasAllFlags(MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess,MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess)">
+            <summary>
+            Determines whether the specified MemberDescriptorAccess has ALL the specified flags.
+            </summary>
+            <param name="access">The access.</param>
+            <param name="flag">The flag.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor.CanRead(MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor)">
+            <summary>
+            Determines whether this instance can be read
+            </summary>
+            <param name="desc">The descriptor instance.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor.CanWrite(MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor)">
+            <summary>
+            Determines whether this instance can be written to
+            </summary>
+            <param name="desc">The descriptor instance.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor.CanExecute(MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor)">
+            <summary>
+            Determines whether this instance can be executed (called as a function)
+            </summary>
+            <param name="desc">The descriptor instance.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor.GetGetterCallbackAsDynValue(MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor,MoonSharp.Interpreter.Script,System.Object)">
+            <summary>
+            Gets the getter of the member as a DynValue containing a callback
+            </summary>
+            <param name="desc">The descriptor instance.</param>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor.WithAccessOrNull(MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor,MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess)">
+            <summary>
+            Returns the specified descriptor if it supports all the specified access modes, otherwise returns null.
+            </summary>
+            <param name="desc">The descriptor instance.</param>
+            <param name="access">The access mode(s).</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptor.CheckAccess(MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor,MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess,System.Object)">
+            <summary>
+            Raises an appropriate ScriptRuntimeException if the specified access is not supported.
+            Checks are made for the MemberDescriptorAccess permissions AND for the access of instance
+            members through static userdatas.
+            </summary>
+            <param name="desc">The desc.</param>
+            <param name="access">The access.</param>
+            <param name="obj">The object to be checked for access.</param>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.BasicDescriptors.IOptimizableDescriptor">
+            <summary>
+            Interface for descriptors of any kind which support optimizations of their implementation according to InteropAccessMode
+            modes. This should seldom - if ever - be implemented in user code.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.IOptimizableDescriptor.Optimize">
+            <summary>
+            Called by standard descriptors when background optimization or preoptimization needs to be performed.
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor">
+            <summary>
+            Specialized <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor"/> for members supporting overloads resolution.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor.Execute(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments)">
+            <summary>
+            Invokes the member from script.
+            Implementors should raise exceptions if the value cannot be executed or if access to an
+            instance member through a static userdata is attempted.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="context">The context.</param>
+            <param name="args">The arguments.</param>
+            <returns></returns>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor.ExtensionMethodType">
+            <summary>
+            Gets the type which this extension method extends, null if this is not an extension method.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor.Parameters">
+            <summary>
+            Gets the type of the arguments of the underlying CLR function
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor.VarArgsArrayType">
+            <summary>
+            Gets a value indicating the type of the ParamArray parameter of a var-args function. If the function is not var-args,
+            null is returned.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor.VarArgsElementType">
+            <summary>
+            Gets a value indicating the type of the elements of the ParamArray parameter of a var-args function. If the function is not var-args,
+            null is returned.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor.SortDiscriminant">
+            <summary>
+            Gets a sort discriminant to give consistent overload resolution matching in case of perfectly equal scores
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess">
+            <summary>
+            Permissions for members access
+            </summary>
+        </member>
+        <member name="F:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess.CanRead">
+            <summary>
+            The member can be read from
+            </summary>
+        </member>
+        <member name="F:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess.CanWrite">
+            <summary>
+            The member can be written to
+            </summary>
+        </member>
+        <member name="F:MoonSharp.Interpreter.Interop.BasicDescriptors.MemberDescriptorAccess.CanExecute">
+            <summary>
+            The can be invoked
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor">
+            <summary>
+            Descriptor of parameters used in <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor"/> implementations.
+            </summary>
+        </member>
+        <member name="F:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.m_OriginalType">
+            <summary>
+            If the type got restricted, the original type before the restriction.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.#ctor(System.String,System.Type,System.Boolean,System.Object,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor"/> class.
+            </summary>
+            <param name="name">The name.</param>
+            <param name="type">The type.</param>
+            <param name="hasDefaultValue">if set to <c>true</c> the parameter has default value.</param>
+            <param name="defaultValue">The default value.</param>
+            <param name="isOut">if set to <c>true</c>, is an out param.</param>
+            <param name="isRef">if set to <c>true</c> is a ref param.</param>
+            <param name="isVarArgs">if set to <c>true</c> is variable arguments param.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.#ctor(System.Reflection.ParameterInfo)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor"/> class.
+            </summary>
+            <param name="pi">A ParameterInfo taken from reflection.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.ToString">
+            <summary>
+            Returns a <see cref="T:System.String"/> that represents this instance.
+            </summary>
+            <returns>
+            A <see cref="T:System.String"/> that represents this instance.
+            </returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.RestrictType(System.Type)">
+            <summary>
+            Restricts the type of this parameter to a tighter constraint.
+            Restrictions must be applied before the <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor"/> containing this
+            parameter is used in any way.
+            </summary>
+            <param name="type">The new type.</param>
+            <exception cref="T:System.InvalidOperationException">
+            Cannot restrict a ref/out or varargs param
+            or
+            Specified operation is not a restriction
+            </exception>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.Name">
+            <summary>
+            Gets the name of the parameter
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.Type">
+            <summary>
+            Gets the type of the parameter
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.HasDefaultValue">
+            <summary>
+            Gets a value indicating whether this instance has a default value.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.DefaultValue">
+            <summary>
+            Gets the default value
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.IsOut">
+            <summary>
+            Gets a value indicating whether this instance is an out parameter
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.IsRef">
+            <summary>
+            Gets a value indicating whether this instance is a "ref" parameter
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.IsVarArgs">
+            <summary>
+            Gets a value indicating whether this instance is a variable arguments param
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.HasBeenRestricted">
+            <summary>
+            Gets a value indicating whether this instance has been restricted.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor.OriginalType">
+            <summary>
+            Gets the original type of the parameter before any restriction has been applied.
+            </summary>
+        </member>
         <member name="M:MoonSharp.Interpreter.Interop.Converters.ClrToScriptConversions.TryObjectToSimpleDynValue(MoonSharp.Interpreter.Script,System.Object)">
             <summary>
             Tries to convert a CLR object to a MoonSharp value, using "simple" logic.
@@ -376,21 +648,707 @@
         </member>
         <member name="M:MoonSharp.Interpreter.Interop.CustomConvertersCollection.Clear">
             <summary>
-            Removes all converters
+            Removes all converters.
             </summary>
         </member>
-        <member name="T:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor">
+        <member name="T:MoonSharp.Interpreter.Interop.DescriptorHelpers">
+            <summary>
+            Helper extension methods used to simplify some parts of userdata descriptor implementations
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.DescriptorHelpers.GetVisibilityFromAttributes(System.Reflection.MemberInfo)">
+            <summary>
+            Determines whether a 
+            <see cref="T:MoonSharp.Interpreter.Interop.MoonSharpVisibleAttribute"/> is changing visibility of a member
+            to scripts.
+            </summary>
+            <param name="mi">The member to check.</param>
+            <returns>
+            <c>true</c> if visibility is forced visible, 
+            <c>false</c> if visibility is forced hidden or the specified MemberInfo is null,
+            <c>if no attribute was found</c>
+            </returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.DescriptorHelpers.IsPropertyInfoPublic(System.Reflection.PropertyInfo)">
+            <summary>
+            Determines whether the specified PropertyInfo is visible publicly (either the getter or the setter is public).
+            </summary>
+            <param name="pi">The PropertyInfo.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.DescriptorHelpers.GetMetaNamesFromAttributes(System.Reflection.MethodInfo)">
+            <summary>
+            Gets the list of metamethod names from attributes - in practice the list of metamethods declared through
+            <see cref="T:MoonSharp.Interpreter.MoonSharpUserDataMetamethodAttribute"/> .
+            </summary>
+            <param name="mi">The mi.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.DescriptorHelpers.GetConversionMethodName(System.Type)">
+            <summary>
+            Gets the name of a conversion method to be exposed to Lua scripts
+            </summary>
+            <param name="type">The type.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.DescriptorHelpers.GetAllImplementedTypes(System.Type)">
+            <summary>
+            Gets all implemented types by a given type
+            </summary>
+            <param name="t">The t.</param>
+            <returns></returns>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor">
+            <summary>
+            An abstract user data descriptor which accepts members described by <see cref="T:MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor"/> objects and
+            correctly dispatches to them.
+            Metamethods are also by default dispatched to operator overloads and other similar methods - see
+            <see cref="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)"/> .
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.IUserDataDescriptor">
+            <summary>
+            Interface used by MoonSharp to access objects of a given type from scripts.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.Index(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <summary>
+            Performs an "index" "get" operation.
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="index">The index.</param>
+            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.SetIndex(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <summary>
+            Performs an "index" "set" operation.
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="index">The index.</param>
+            <param name="value">The value to be set</param>
+            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.AsString(System.Object)">
+            <summary>
+            Converts this userdata to string
+            </summary>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
+            <summary>
+            
+            Gets a "meta" operation on this userdata. If a descriptor does not support this functionality,
+            it should return "null" (not a nil). 
+            
+            These standard metamethods can be supported (the return value should be a function accepting the
+            classic parameters of the corresponding metamethod):
+            __add, __sub, __mul, __div, __div, __pow, __unm, __eq, __lt, __le, __lt, __len, __concat, 
+            __pairs, __ipairs, __iterator, __call
+            
+            These standard metamethods are supported through other calls for efficiency:
+            __index, __newindex, __tostring
+            
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="metaname">The name of the metamember.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.IsTypeCompatible(System.Type,System.Object)">
+            <summary>
+            Determines whether the specified object is compatible with the specified type.
+            Unless a very specific behaviour is needed, the correct implementation is a 
+            simple " return type.IsInstanceOfType(obj); "
+            </summary>
+            <param name="type">The type.</param>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.IUserDataDescriptor.Name">
+            <summary>
+            Gets the name of the descriptor (usually, the name of the type described).
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.IUserDataDescriptor.Type">
+            <summary>
+            Gets the type this descriptor refers to
+            </summary>
+        </member>
+        <member name="F:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.SPECIALNAME_INDEXER_GET">
+            <summary>
+            The special name used by CLR for indexer getters
+            </summary>
+        </member>
+        <member name="F:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.SPECIALNAME_INDEXER_SET">
+            <summary>
+            The special name used by CLR for indexer setters
+            </summary>
+        </member>
+        <member name="F:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.SPECIALNAME_CAST_EXPLICIT">
+            <summary>
+            The special name used by CLR for explicit cast conversions
+            </summary>
+        </member>
+        <member name="F:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.SPECIALNAME_CAST_IMPLICIT">
+            <summary>
+            The special name used by CLR for implicit cast conversions
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.#ctor(System.Type,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor"/> class.
+            </summary>
+            <param name="type">The type this descriptor refers to.</param>
+            <param name="friendlyName">A friendly name for the type, or null.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.AddMetaMember(System.String,MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor)">
+            <summary>
+            Adds a member to the meta-members list.
+            </summary>
+            <param name="name">The name of the metamethod.</param>
+            <param name="desc">The desc.</param>
+            <exception cref="T:System.ArgumentException">
+            Thrown if a name conflict is detected and one of the conflicting members does not support overloads.
+            </exception>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.AddDynValue(System.String,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Adds a DynValue as a member
+            </summary>
+            <param name="name">The name.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.AddMember(System.String,MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor)">
+            <summary>
+            Adds a property to the member list
+            </summary>
+            <param name="name">The name.</param>
+            <param name="desc">The descriptor.</param>
+            <exception cref="T:System.ArgumentException">
+            Thrown if a name conflict is detected and one of the conflicting members does not support overloads.
+            </exception>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.Index(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <summary>
+            Performs an "index" "get" operation. This tries to resolve minor variations of member names.
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="index">The index.</param>
+            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.TryIndexOnExtMethod(MoonSharp.Interpreter.Script,System.Object,System.String)">
+            <summary>
+            Tries to perform an indexing operation by checking newly added extension methods for the given indexName.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="indexName">Member name to be indexed.</param>
+            <returns></returns>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.HasMember(System.String)">
+            <summary>
+            Determines whether the descriptor contains the specified member (by exact name)
+            </summary>
+            <param name="exactName">Name of the member.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.HasMetaMember(System.String)">
+            <summary>
+            Determines whether the descriptor contains the specified member in the meta list (by exact name)
+            </summary>
+            <param name="exactName">Name of the meta-member.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.TryIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
+            <summary>
+            Tries to perform an indexing operation by checking methods and properties for the given indexName
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="indexName">Member name to be indexed.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.SetIndex(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <summary>
+            Performs an "index" "set" operation. This tries to resolve minor variations of member names.
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="index">The index.</param>
+            <param name="value">The value to be set</param>
+            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.TrySetIndex(MoonSharp.Interpreter.Script,System.Object,System.String,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Tries to perform an indexing "set" operation by checking methods and properties for the given indexName
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="indexName">Member name to be indexed.</param>
+            <param name="value">The value.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.Camelify(System.String)">
+            <summary>
+            Converts the specified name from underscore_case to camelCase.
+            </summary>
+            <param name="name">The name.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.UpperFirstLetter(System.String)">
+            <summary>
+            Converts the specified name to one with an uppercase first letter (something to Something).
+            </summary>
+            <param name="name">The name.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.AsString(System.Object)">
+            <summary>
+            Converts this userdata to string
+            </summary>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.ExecuteIndexer(MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor,MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Executes the specified indexer method.
+            </summary>
+            <param name="mdesc">The method descriptor</param>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="index">The indexer parameter</param>
+            <param name="value">The dynvalue to set on a setter, or null.</param>
+            <returns></returns>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
+            <summary>
+            Gets a "meta" operation on this userdata. If a descriptor does not support this functionality,
+            it should return "null" (not a nil). 
+            See <see cref="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)"/> for further details.
+            
+            If a method exists marked with <see cref="T:MoonSharp.Interpreter.MoonSharpUserDataMetamethodAttribute"/> for the specific
+            metamethod requested, that method is returned.
+            
+            If the above fails, the following dispatching occur:
+            
+            __add, __sub, __mul, __div, __mod and __unm are dispatched to C# operator overloads (if they exist)
+            __eq is dispatched to System.Object.Equals.
+            __lt and __le are dispatched IComparable.Compare, if the type implements IComparable or IComparable{object}
+            __len is dispatched to Length and Count properties, if those exist.
+            __iterator is handled if the object implements IEnumerable or IEnumerator.
+            __tonumber is dispatched to implicit or explicit conversion operators to standard numeric types.
+            __tobool is dispatched to an implicit or explicit conversion operator to bool. If that fails, operator true is used.
+            
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="metaname">The name of the metamember.</param>
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.IsTypeCompatible(System.Type,System.Object)">
+            <summary>
+            Determines whether the specified object is compatible with the specified type.
+            Unless a very specific behaviour is needed, the correct implementation is a 
+            simple " return type.IsInstanceOfType(obj); "
+            </summary>
+            <param name="type">The type.</param>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.Name">
+            <summary>
+            Gets the name of the descriptor (usually, the name of the type described).
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.Type">
+            <summary>
+            Gets the type this descriptor refers to
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.BasicDescriptors.DispatchingUserDataDescriptor.FriendlyName">
+            <summary>
+            Gets a human readable friendly name of the descriptor
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.IGeneratorUserDataDescriptor">
+            <summary>
+            An interface for type descriptors having the ability to generate other descriptors on the fly.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.IGeneratorUserDataDescriptor.Generate(System.Type)">
+            <summary>
+            
+            Generates a new descriptor for the specified type.
+            
+            The purpose is to allow a mechanism by which a type descriptor can replace itself with another
+            descriptor for a specific type. For example, descriptors can be created on the fly to support
+            generic types through this mechanism.
+            
+            The return value should be:
+            	null - if this descriptor is simply skipped for the specified type
+            	this - acts as if the descriptor was a vanilla descriptor
+            	a new descriptor - if a new descriptor should be used in place of this one
+            	
+            It's recommended that instances of descriptors are cached for future references. One possible way,
+            to do the caching is to have the generator register the descriptor through <see cref="M:MoonSharp.Interpreter.UserData.RegisterType(System.Type,MoonSharp.Interpreter.InteropAccessMode,System.String)"/>. 
+            In that case, it should query whether the type is exactly registered, through <see cref="M:MoonSharp.Interpreter.UserData.IsTypeRegistered(System.Type)"/>
+            
+            NOTE-1 : the search for descriptors does NOT stop with the descriptor returned by this type, but 
+            other descriptors (e.g. for interfaces) might still be added.
+            
+            NOTE-2 : the descriptor generation mechanism is not triggered on an exact match of types.
+            
+            NOTE-3 : the method is called in the context of a lock over the descriptors registry so no unpredictable changes to the 
+            registry can come from other threads during the execution of this method. However this method should not take other 
+            locks, to avoid deadlocks.
+            
+            </summary>
+            <param name="type">The type.</param>
+            <returns>Null, this object instance or a new descriptor.</returns>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.ObjectCallbackMemberDescriptor">
+            <summary>
+            Member descriptor which allows to define new members which behave similarly to class instance members
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase">
+            <summary>
+            Class providing easier marshalling of CLR functions
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.Initialize(System.String,System.Boolean,MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor[],System.Boolean)">
+            <summary>
+            Initializes this instance.
+            This *MUST* be called by the constructors extending this class to complete initialization.
+            </summary>
+            <param name="funcName">Name of the function.</param>
+            <param name="isStatic">if set to <c>true</c> [is static].</param>
+            <param name="parameters">The parameters.</param>
+            <param name="isExtensionMethod">if set to <c>true</c> [is extension method].</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.GetCallback(MoonSharp.Interpreter.Script,System.Object)">
+            <summary>
+            Gets a callback function as a delegate
+            </summary>
+            <param name="script">The script for which the callback must be generated.</param>
+            <param name="obj">The object (null for static).</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.GetCallbackFunction(MoonSharp.Interpreter.Script,System.Object)">
+            <summary>
+            Gets the callback function.
+            </summary>
+            <param name="script">The script for which the callback must be generated.</param>
+            <param name="obj">The object (null for static).</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.GetCallbackAsDynValue(MoonSharp.Interpreter.Script,System.Object)">
+            <summary>
+            Gets the callback function as a DynValue.
+            </summary>
+            <param name="script">The script for which the callback must be generated.</param>
+            <param name="obj">The object (null for static).</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.CreateCallbackDynValue(MoonSharp.Interpreter.Script,System.Reflection.MethodInfo,System.Object)">
+            <summary>
+            Creates a callback DynValue starting from a MethodInfo.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="mi">The mi.</param>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.BuildArgumentList(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments,System.Collections.Generic.List{System.Int32}@)">
+            <summary>
+            Builds the argument list.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="context">The context.</param>
+            <param name="args">The arguments.</param>
+            <param name="outParams">Output: A list containing the indices of all "out" parameters, or null if no out parameters are specified.</param>
+            <returns>The arguments, appropriately converted.</returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.BuildReturnValue(MoonSharp.Interpreter.Script,System.Collections.Generic.List{System.Int32},System.Object[],System.Object)">
+            <summary>
+            Builds the return value of a call
+            </summary>
+            <param name="script">The script.</param>
+            <param name="outParams">The out parameters indices, or null. See <see cref="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.BuildArgumentList(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments,System.Collections.Generic.List{System.Int32}@)"/>.</param>
+            <param name="pars">The parameters passed to the function.</param>
+            <param name="retv">The return value from the function. Use DynValue.Void if the function returned no value.</param>
+            <returns>A DynValue to be returned to scripts</returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.Execute(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments)">
+            <summary>
+            The internal callback which actually executes the method
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="context">The context.</param>
+            <param name="args">The arguments.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.GetValue(MoonSharp.Interpreter.Script,System.Object)">
+            <summary>
+            Gets the value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/> to be exposed to scripts.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <returns>
+            The value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/>.
+            </returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Sets the value.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="v">The v.</param>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.IsStatic">
+            <summary>
+            Gets a value indicating whether the described method is static.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.Name">
+            <summary>
+            Gets the name of the described method
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.SortDiscriminant">
+            <summary>
+            Gets a sort discriminant to give consistent overload resolution matching in case of perfectly equal scores
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.Parameters">
+            <summary>
+            Gets the type of the arguments of the underlying CLR function
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.ExtensionMethodType">
+            <summary>
+            Gets the type which this extension method extends, null if this is not an extension method.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.VarArgsArrayType">
+            <summary>
+            Gets a value indicating the type of the ParamArray parameter of a var-args function. If the function is not var-args,
+            null is returned.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.VarArgsElementType">
+            <summary>
+            Gets a value indicating the type of the elements of the ParamArray parameter of a var-args function. If the function is not var-args,
+            null is returned.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FunctionMemberDescriptorBase.MemberAccess">
+            <summary>
+            Gets the types of access supported by this member
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.ObjectCallbackMemberDescriptor.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.ObjectCallbackMemberDescriptor"/> class.
+            A new member descriptor is defined, which is a function taking no parameters and returning void, doing nothing.
+            </summary>
+            <param name="funcName">Name of the function.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.ObjectCallbackMemberDescriptor.#ctor(System.String,System.Func{System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments,System.Object})">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.ObjectCallbackMemberDescriptor"/> class.
+            The function described by descriptors created by this callback are defined as if they take no parameters
+            and thus don't support overload resolution well (unless they really take no parameters) but can freely be
+            used if no overload resolution is required.
+            </summary>
+            <param name="funcName">Name of the function.</param>
+            <param name="callBack">The callback function.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.ObjectCallbackMemberDescriptor.#ctor(System.String,System.Func{System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments,System.Object},MoonSharp.Interpreter.Interop.BasicDescriptors.ParameterDescriptor[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.ObjectCallbackMemberDescriptor"/> class.
+            Members defined with this constructor will support overload resolution.
+            </summary>
+            <param name="funcName">Name of the function.</param>
+            <param name="callBack">The call back.</param>
+            <param name="parameters">The parameters.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.ObjectCallbackMemberDescriptor.Execute(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments)">
+            <summary>
+            The internal callback which actually executes the method
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="context">The context.</param>
+            <param name="args">The arguments.</param>
+            <returns></returns>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor">
+            <summary>
+            Standard descriptor for Enum values
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.#ctor(System.Type,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor"/> class.
+            </summary>
+            <param name="enumType">Type of the enum.</param>
+            <param name="friendlyName">Name of the friendly.</param>
+            <exception cref="T:System.ArgumentException">enumType must be an enum!</exception>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.FillMemberList">
+            <summary>
+            Fills the member list.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.AddEnumMethod(System.String,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Adds an enum method to the object
+            </summary>
+            <param name="name">The name.</param>
+            <param name="dynValue">The dyn value.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.GetValueSigned(MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Gets the value of the enum as a long
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.GetValueUnsigned(MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Gets the value of the enum as a ulong
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.CreateValueSigned(System.Int64)">
+            <summary>
+            Creates an enum value from a long
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.CreateValueUnsigned(System.UInt64)">
+            <summary>
+            Creates an enum value from a ulong
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.CreateSignedConversionFunctions">
+            <summary>
+            Creates conversion functions for signed enums
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.CreateUnsignedConversionFunctions">
+            <summary>
+            Creates conversion functions for unsigned enums
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.IsTypeCompatible(System.Type,System.Object)">
+            <summary>
+            Determines whether the specified object is compatible with the specified type.
+            </summary>
+            <param name="type">The type.</param>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
+            <summary>
+            Gets a "meta" operation on this userdata. 
+            In this specific case, only the concat operator is supported, only on flags enums and it implements the
+            'or' operator.
+            </summary>
+            <param name="script"></param>
+            <param name="obj"></param>
+            <param name="metaname"></param>
+            <returns></returns>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.UnderlyingType">
+            <summary>
+            Gets the underlying type of the enum.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.IsUnsigned">
+            <summary>
+            Gets a value indicating whether underlying type of the enum is unsigned.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.StandardEnumUserDataDescriptor.IsFlags">
+            <summary>
+            Gets a value indicating whether this instance describes a flags enumeration.
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor">
+            <summary>
+            Class providing a simple descriptor for constant DynValues in userdata
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor.#ctor(System.String,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor"/> class.
+            </summary>
+            <param name="name">The name.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
+            <summary>
+            Gets the value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/> to be exposed to scripts.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <returns>
+            The value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/>.
+            </returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Sets the value of this member from a <see cref="T:MoonSharp.Interpreter.DynValue"/>.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <param name="value">The value to be set.</param>
+            <exception cref="T:MoonSharp.Interpreter.ScriptRuntimeException">userdata '{0}' cannot be written to.</exception>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor.IsStatic">
+            <summary>
+            Gets a value indicating whether the described member is static.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor.Name">
+            <summary>
+            Gets the name of the member
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor.MemberAccess">
+            <summary>
+            Gets the types of access supported by this member
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.DynValueMemberDescriptor.Value">
+            <summary>
+            Gets the value wrapped by this descriptor
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.EventMemberDescriptor">
             <summary>
             Class providing easier marshalling of CLR events. Handling is limited to a narrow range of handler signatures, which,
             however, covers in practice most of all available events.
             </summary>
         </member>
-        <member name="F:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor.MAX_ARGS_IN_DELEGATE">
+        <member name="F:MoonSharp.Interpreter.Interop.EventMemberDescriptor.MAX_ARGS_IN_DELEGATE">
             <summary>
             The maximum number of arguments supported in an event handler delegate
             </summary>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor.TryCreateIfVisible(System.Reflection.EventInfo,MoonSharp.Interpreter.InteropAccessMode)">
+        <member name="M:MoonSharp.Interpreter.Interop.EventMemberDescriptor.TryCreateIfVisible(System.Reflection.EventInfo,MoonSharp.Interpreter.InteropAccessMode)">
             <summary>
             Tries to create a new StandardUserDataEventDescriptor, returning <c>null</c> in case the method is not 
             visible to script code.
@@ -399,7 +1357,7 @@
             <param name="accessMode">The <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/></param>
             <returns>A new StandardUserDataEventDescriptor or null.</returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor.CheckEventIsCompatible(System.Reflection.EventInfo,System.Boolean)">
+        <member name="M:MoonSharp.Interpreter.Interop.EventMemberDescriptor.CheckEventIsCompatible(System.Reflection.EventInfo,System.Boolean)">
             <summary>
             Checks if the event is compatible with a standard descriptor
             </summary>
@@ -420,17 +1378,17 @@
             or
             The event handler has a value type parameter or a by ref parameter
             or
-            The event handler signature is not a valid method according to <see cref="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.CheckMethodIsCompatible(System.Reflection.MethodBase,System.Boolean)"/>
+            The event handler signature is not a valid method according to <see cref="M:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.CheckMethodIsCompatible(System.Reflection.MethodBase,System.Boolean)"/>
             </exception>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor.#ctor(System.Reflection.EventInfo,MoonSharp.Interpreter.InteropAccessMode)">
+        <member name="M:MoonSharp.Interpreter.Interop.EventMemberDescriptor.#ctor(System.Reflection.EventInfo,MoonSharp.Interpreter.InteropAccessMode)">
             <summary>
-            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor"/> class.
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.EventMemberDescriptor"/> class.
             </summary>
             <param name="ei">The ei.</param>
             <param name="accessMode">The access mode.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
+        <member name="M:MoonSharp.Interpreter.Interop.EventMemberDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
             <summary>
             Gets a dynvalue which is a facade supporting add/remove methods which is callable from scripts
             </summary>
@@ -438,14 +1396,32 @@
             <param name="obj">The object for which the facade should be written.</param>
             <returns></returns>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor.EventInfo">
+        <member name="M:MoonSharp.Interpreter.Interop.EventMemberDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Sets the value.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="v">The v.</param>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.EventMemberDescriptor.EventInfo">
             <summary>
             Gets the EventInfo object of the event described by this descriptor
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataEventDescriptor.IsStatic">
+        <member name="P:MoonSharp.Interpreter.Interop.EventMemberDescriptor.IsStatic">
             <summary>
             Gets a value indicating whether the event described by this descriptor is static.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.EventMemberDescriptor.Name">
+            <summary>
+            Gets the name of the member
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.EventMemberDescriptor.MemberAccess">
+            <summary>
+            Gets the types of access supported by this member
             </summary>
         </member>
         <member name="T:MoonSharp.Interpreter.Interop.IUserDataType">
@@ -493,46 +1469,46 @@
             <param name="metaname">The name of the metamember.</param>
             <returns></returns>
         </member>
-        <member name="T:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor">
+        <member name="T:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor">
             <summary>
             Class providing easier marshalling of overloaded CLR functions
             </summary>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.#ctor(System.String,System.Type)">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.#ctor(System.String,System.Type)">
             <summary>
-            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor"/> class.
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor"/> class.
             </summary>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.#ctor(System.String,System.Type,MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor)">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.#ctor(System.String,System.Type,MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor)">
             <summary>
-            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor"/> class.
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor"/> class.
             </summary>
             <param name="name">The name.</param>
             <param name="declaringType">The declaring type.</param>
             <param name="descriptor">The descriptor of the first overloaded method.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.#ctor(System.String,System.Type,System.Collections.Generic.IEnumerable{MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor})">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.#ctor(System.String,System.Type,System.Collections.Generic.IEnumerable{MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor})">
             <summary>
-            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor"/> class.
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor"/> class.
             </summary>
             <param name="name">The name.</param>
             <param name="declaringType">The declaring type.</param>
             <param name="descriptors">The descriptors of the overloaded methods.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.SetExtensionMethodsSnapshot(System.Int32,System.Collections.Generic.List{MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor})">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.SetExtensionMethodsSnapshot(System.Int32,System.Collections.Generic.List{MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor})">
             <summary>
             Sets the extension methods snapshot.
             </summary>
             <param name="version">The version.</param>
             <param name="extMethods">The ext methods.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.AddOverload(MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor)">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.AddOverload(MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor)">
             <summary>
             Adds an overload.
             </summary>
             <param name="overload">The overload.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.PerformOverloadedCall(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments)">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.PerformOverloadedCall(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments)">
             <summary>
             Performs the overloaded call.
             </summary>
@@ -543,7 +1519,7 @@
             <returns></returns>
             <exception cref="T:MoonSharp.Interpreter.ScriptRuntimeException">function call doesn't match any overload</exception>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.CalcScoreForOverload(MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments,MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor,System.Boolean)">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.CalcScoreForOverload(MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments,MoonSharp.Interpreter.Interop.BasicDescriptors.IOverloadableMemberDescriptor,System.Boolean)">
             <summary>
             Calculates the score for the overload.
             </summary>
@@ -553,7 +1529,7 @@
             <param name="isExtMethod">if set to <c>true</c>, is an extension method.</param>
             <returns></returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.GetCallback(MoonSharp.Interpreter.Script,System.Object)">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.GetCallback(MoonSharp.Interpreter.Script,System.Object)">
             <summary>
             Gets a callback function as a delegate
             </summary>
@@ -561,7 +1537,7 @@
             <param name="obj">The object (null for static).</param>
             <returns></returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.GetCallbackFunction(MoonSharp.Interpreter.Script,System.Object)">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.GetCallbackFunction(MoonSharp.Interpreter.Script,System.Object)">
             <summary>
             Gets the callback function.
             </summary>
@@ -569,30 +1545,41 @@
             <param name="obj">The object (null for static).</param>
             <returns></returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.GetCallbackAsDynValue(MoonSharp.Interpreter.Script,System.Object)">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
             <summary>
-            Gets the callback function as a DynValue.
+            Gets the value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/> to be exposed to scripts.
             </summary>
-            <param name="script">The script for which the callback must be generated.</param>
-            <param name="obj">The object (null for static).</param>
-            <returns></returns>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <returns>
+            The value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/>.
+            </returns>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.IgnoreExtensionMethods">
+        <member name="M:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Sets the value of this member from a <see cref="T:MoonSharp.Interpreter.DynValue"/>.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <param name="value">The value to be set.</param>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.IgnoreExtensionMethods">
             <summary>
             Gets or sets a value indicating whether this instance ignores extension methods.
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.Name">
+        <member name="P:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.Name">
             <summary>
             Gets the name of the first described overload
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.DeclaringType">
+        <member name="P:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.DeclaringType">
             <summary>
             Gets the name of the first described overload
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor.OverloadCount">
+        <member name="P:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.OverloadCount">
             <summary>
             Gets the number of overloaded methods contained in this collection
             </summary>
@@ -600,12 +1587,28 @@
             The overload count.
             </value>
         </member>
-        <member name="T:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor">
+        <member name="P:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.IsStatic">
+            <summary>
+            Gets a value indicating whether there is at least one static method in the resolution list
+            </summary>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.MemberAccess">
+            <summary>
+            Gets the types of access supported by this member
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.OverloadedMethodMemberDescriptor.OverloadableMemberDescriptorComparer">
+            <summary>
+            Comparer class for IOverloadableMemberDescriptor
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.FieldMemberDescriptor">
             <summary>
             Class providing easier marshalling of CLR fields
             </summary>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.TryCreateIfVisible(System.Reflection.FieldInfo,MoonSharp.Interpreter.InteropAccessMode)">
+        <member name="M:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.TryCreateIfVisible(System.Reflection.FieldInfo,MoonSharp.Interpreter.InteropAccessMode)">
             <summary>
             Tries to create a new StandardUserDataFieldDescriptor, returning <c>null</c> in case the field is not 
             visible to script code.
@@ -614,14 +1617,14 @@
             <param name="accessMode">The <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/></param>
             <returns>A new StandardUserDataFieldDescriptor or null.</returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.#ctor(System.Reflection.FieldInfo,MoonSharp.Interpreter.InteropAccessMode)">
+        <member name="M:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.#ctor(System.Reflection.FieldInfo,MoonSharp.Interpreter.InteropAccessMode)">
             <summary>
-            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor"/> class.
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor"/> class.
             </summary>
             <param name="fi">The FieldInfo.</param>
             <param name="accessMode">The <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/> </param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
+        <member name="M:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
             <summary>
             Gets the value of the property
             </summary>
@@ -629,7 +1632,7 @@
             <param name="obj">The object.</param>
             <returns></returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
+        <member name="M:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
             <summary>
             Sets the value of the property
             </summary>
@@ -637,42 +1640,283 @@
             <param name="obj">The object.</param>
             <param name="v">The value to set.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.GetGetterCallbackAsDynValue(MoonSharp.Interpreter.Script,System.Object)">
-            <summary>
-            Gets the getter of the property as a DynValue containing a callback
-            </summary>
-            <param name="script">The script.</param>
-            <param name="obj">The object.</param>
-            <returns></returns>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.FieldInfo">
+        <member name="P:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.FieldInfo">
             <summary>
             Gets the FieldInfo got by reflection
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.AccessMode">
+        <member name="P:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.AccessMode">
             <summary>
             Gets the <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/>
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.IsStatic">
+        <member name="P:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.IsStatic">
             <summary>
             Gets a value indicating whether the described property is static.
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.Name">
+        <member name="P:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.Name">
             <summary>
             Gets the name of the property
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.IsConst">
+        <member name="P:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.IsConst">
             <summary>
             Gets a value indicating whether this instance is a constant 
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataFieldDescriptor.IsReadonly">
+        <member name="P:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.IsReadonly">
             <summary>
             Gets a value indicating whether this instance is readonly 
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.FieldMemberDescriptor.MemberAccess">
+            <summary>
+            Gets the types of access supported by this member
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor">
+            <summary>
+            Member descriptor for the default constructor of value types.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.#ctor(System.Type)">
+            <summary>
+            Initializes a new instance of the
+            <see cref="T:MoonSharp.Interpreter.Interop.MethodMemberDescriptor"/> class
+            representing the default empty ctor for a value type.
+            </summary>
+            <param name="valueType">Type of the value.</param>
+            <exception cref="T:System.ArgumentException">valueType is not a value type</exception>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.Execute(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments)">
+            <summary>
+            Invokes the member from script.
+            Implementors should raise exceptions if the value cannot be executed or if access to an
+            instance member through a static userdata is attempted.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object.</param>
+            <param name="context">The context.</param>
+            <param name="args">The arguments.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
+            <summary>
+            Gets the value of this member as a 
+            <see cref="T:MoonSharp.Interpreter.DynValue"/> to be exposed to scripts.
+            Implementors should raise exceptions if the value cannot be read or if access to an
+            instance member through a static userdata is attempted.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <returns>
+            The value of this member as a <see cref="T:MoonSharp.Interpreter.DynValue"/>.
+            </returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
+            <summary>
+            Sets the value of this member from a 
+            <see cref="T:MoonSharp.Interpreter.DynValue"/>.
+            Implementors should raise exceptions if the value cannot be read or if access to an
+            instance member through a static userdata is attempted.
+            </summary>
+            <param name="script">The script.</param>
+            <param name="obj">The object owning this member, or null if static.</param>
+            <param name="value">The value to be set.</param>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.IsStatic">
+            <summary>
+            Gets a value indicating whether the described method is static.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.Name">
+            <summary>
+            Gets the name of the described method
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.ValueTypeDefaultCtor">
+            <summary>
+            This property is equal to the value type to be constructed.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.Parameters">
+            <summary>
+            Gets the type of the arguments of the underlying CLR function
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.ExtensionMethodType">
+            <summary>
+            Gets the type which this extension method extends, null if this is not an extension method.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.VarArgsArrayType">
+            <summary>
+            Gets a value indicating the type of the ParamArray parameter of a var-args function. If the function is not var-args,
+            null is returned.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.VarArgsElementType">
+            <summary>
+            Gets a value indicating the type of the elements of the ParamArray parameter of a var-args function. If the function is not var-args,
+            null is returned.
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.SortDiscriminant">
+            <summary>
+            Gets a sort discriminant to give consistent overload resolution matching in case of perfectly equal scores
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.ValueTypeDefaultCtorMemberDescriptor.MemberAccess">
+            <summary>
+            Gets the types of access supported by this member
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor">
+            <summary>
+            Standard user data descriptor used to instantiate generics.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.#ctor(System.Type,MoonSharp.Interpreter.InteropAccessMode)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor"/> class.
+            </summary>
+            <param name="type">The type this descriptor refers to.</param>
+            <param name="accessMode">The interop access mode this descriptor uses for members access</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.Index(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.SetIndex(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.AsString(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.IsTypeCompatible(System.Type,System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.Generate(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.AccessMode">
+            <summary>
+            Gets the interop access mode this descriptor uses for members access
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.Name">
+            <inheritdoc/>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.StandardGenericsUserDataDescriptor.Type">
+            <inheritdoc/>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.UserDataRegistries.ExtensionMethodsRegistry">
+            <summary>
+            Registry of all extension methods. Use UserData statics to access these.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.ExtensionMethodsRegistry.RegisterExtensionType(System.Type,MoonSharp.Interpreter.InteropAccessMode)">
+            <summary>
+            Registers an extension Type (that is a type containing extension methods)
+            </summary>
+            <param name="type">The type.</param>
+            <param name="mode">The InteropAccessMode.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.ExtensionMethodsRegistry.GetExtensionMethodsByName(System.String)">
+            <summary>
+            Gets all the extension methods which can match a given name
+            </summary>
+            <param name="name">The name.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.ExtensionMethodsRegistry.GetExtensionMethodsChangeVersion">
+            <summary>
+            Gets a number which gets incremented everytime the extension methods registry changes.
+            Use this to invalidate caches based on extension methods
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.ExtensionMethodsRegistry.GetExtensionMethodsByNameAndType(System.String,System.Type)">
+            <summary>
+            Gets all the extension methods which can match a given name and extending a given Type
+            </summary>
+            <param name="name">The name.</param>
+            <param name="extendedType">The extended type.</param>
+            <returns></returns>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry">
+            <summary>
+            Registry of all type descriptors. Use UserData statics to access these.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry.RegisterAssembly(System.Reflection.Assembly,System.Boolean)">
+            <summary>
+            Registers all types marked with a MoonSharpUserDataAttribute that ar contained in an assembly.
+            </summary>
+            <param name="asm">The assembly.</param>
+            <param name="includeExtensionTypes">if set to <c>true</c> extension types are registered to the appropriate registry.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry.IsTypeRegistered(System.Type)">
+            <summary>
+            Determines whether the specified type is registered. Note that this should be used only to check if a descriptor
+            has been registered EXACTLY. For many types a descriptor can still be created, for example through the descriptor
+            of a base type or implemented interfaces.
+            </summary>
+            <param name="type">The type</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry.UnregisterType(System.Type)">
+            <summary>
+            Unregisters a type.
+            WARNING: unregistering types at runtime is a dangerous practice and may cause unwanted errors.
+            Use this only for testing purposes or to re-register the same type in a slightly different way.
+            Additionally, it's a good practice to discard all previous loaded scripts after calling this method.
+            </summary>
+            <param name="t">The The type to be unregistered</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry.RegisterType_Impl(System.Type,MoonSharp.Interpreter.InteropAccessMode,System.String,MoonSharp.Interpreter.Interop.IUserDataDescriptor)">
+            <summary>
+            Registers a type
+            </summary>
+            <param name="type">The type.</param>
+            <param name="accessMode">The access mode (used only if a default type descriptor is created).</param>
+            <param name="friendlyName">Friendly name of the descriptor.</param>
+            <param name="descriptor">The descriptor, or null to use a default one.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry.GetDescriptorForType(System.Type,System.Boolean)">
+            <summary>
+            Gets the best possible type descriptor for a specified CLR type.
+            </summary>
+            <param name="type">The CLR type for which the descriptor is desired.</param>
+            <param name="searchInterfaces">if set to <c>true</c> interfaces are used in the search.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry.IsTypeBlacklisted(System.Type)">
+            <summary>
+            Determines whether the specified type is blacklisted.
+            Blacklisted types CANNOT be registered using default descriptors but they can still be registered
+            with custom descriptors. Forcing registration of blacklisted types in this way can introduce
+            side effects.
+            </summary>
+            <param name="t">The t.</param>
+            <returns></returns>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry.DefaultAccessMode">
+            <summary>
+            Gets or sets the default access mode to be used in the whole application
+            </summary>
+            <value>
+            The default access mode.
+            </value>
+            <exception cref="T:System.ArgumentException">InteropAccessMode is InteropAccessMode.Default</exception>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.UserDataRegistries.TypeDescriptorRegistry.RegistrationPolicy">
+            <summary>
+            Gets or sets the registration policy to be used in the whole application
             </summary>
         </member>
         <member name="T:MoonSharp.Interpreter.IO.BinDumpBinaryReader">
@@ -1122,6 +2366,22 @@
             <param name="debugText">The debug text to aid location (appears as "near 'xxx'").</param>
             <returns></returns>
         </member>
+        <member name="M:MoonSharp.Interpreter.ScriptRuntimeException.AccessInstanceMemberOnStatics(MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor)">
+            <summary>
+            Creates a ScriptRuntimeException with a predefined error message specifying that
+            an attempt to access a non-static member from a static userdata was made
+            </summary>
+            <param name="desc">The member descriptor.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.ScriptRuntimeException.AccessInstanceMemberOnStatics(MoonSharp.Interpreter.Interop.IUserDataDescriptor,MoonSharp.Interpreter.Interop.BasicDescriptors.IMemberDescriptor)">
+            <summary>
+            Creates a ScriptRuntimeException with a predefined error message specifying that
+            an attempt to access a non-static member from a static userdata was made
+            </summary>
+            <param name="typeDescr">The type descriptor.</param>
+            <param name="desc">The member descriptor.</param>
+            <returns></returns>
+        </member>
         <member name="P:MoonSharp.Interpreter.ScriptRuntimeException.DoNotDecorateMessage">
             <summary>
             Gets or sets a value indicating whether the message should not be decorated
@@ -1234,69 +2494,6 @@
         <member name="P:MoonSharp.Interpreter.Interop.AnonWrapper`1.Value">
             <summary>
             Gets or sets the value this instance wraps.
-            </summary>
-        </member>
-        <member name="T:MoonSharp.Interpreter.Interop.IUserDataDescriptor">
-            <summary>
-            Interface used by MoonSharp to access objects of a given type from scripts.
-            </summary>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.Index(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,System.Boolean)">
-            <summary>
-            Performs an "index" "get" operation.
-            </summary>
-            <param name="script">The script originating the request</param>
-            <param name="obj">The object (null if a static request is done)</param>
-            <param name="index">The index.</param>
-            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.SetIndex(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue,System.Boolean)">
-            <summary>
-            Performs an "index" "set" operation.
-            </summary>
-            <param name="script">The script originating the request</param>
-            <param name="obj">The object (null if a static request is done)</param>
-            <param name="index">The index.</param>
-            <param name="value">The value to be set</param>
-            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.AsString(System.Object)">
-            <summary>
-            Converts this userdata to string
-            </summary>
-            <param name="obj">The object.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
-            <summary>
-            
-            Gets a "meta" operation on this userdata. If a descriptor does not support this functionality,
-            it should return "null" (not a nil). 
-            
-            These standard metamethods can be supported (the return value should be a function accepting the
-            classic parameters of the corresponding metamethod):
-            __add, __sub, __mul, __div, __div, __pow, __unm, __eq, __lt, __le, __lt, __len, __concat, 
-            __pairs, __ipairs, __iterator, __call
-            
-            These standard metamethods are supported through other calls for efficiency:
-            __index, __newindex, __tostring
-            
-            </summary>
-            <param name="script">The script originating the request</param>
-            <param name="obj">The object (null if a static request is done)</param>
-            <param name="metaname">The name of the metamember.</param>
-            <returns></returns>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.IUserDataDescriptor.Name">
-            <summary>
-            Gets the name of the descriptor (usually, the name of the type described).
-            </summary>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.IUserDataDescriptor.Type">
-            <summary>
-            Gets the type this descriptor refers to
             </summary>
         </member>
         <member name="M:MoonSharp.Interpreter.Interop.LuaStateInterop.Tools.IsNumericType(System.Object)">
@@ -1444,6 +2641,11 @@
             Determines whether the index contains the specified key.
             </summary>
             <param name="key">The key.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.DataStructs.LinkedListIndex`2.Clear">
+            <summary>
+            Clears this instance (removes all elements)
+            </summary>
         </member>
         <member name="T:MoonSharp.Interpreter.DataStructs.Slice`1">
             <summary>
@@ -1797,23 +2999,62 @@
             <param name="asm">The assembly.</param>
             <param name="includeExtensionTypes">if set to <c>true</c> extension types are registered to the appropriate registry.</param>
         </member>
+        <member name="M:MoonSharp.Interpreter.UserData.IsTypeRegistered(System.Type)">
+            <summary>
+            Determines whether the specified type is registered. Note that this should be used only to check if a descriptor
+            has been registered EXACTLY. For many types a descriptor can still be created, for example through the descriptor
+            of a base type or implemented interfaces.
+            </summary>
+            <param name="t">The type.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.UserData.IsTypeRegistered``1">
+            <summary>
+            Determines whether the specified type is registered. Note that this should be used only to check if a descriptor
+            has been registered EXACTLY. For many types a descriptor can still be created, for example through the descriptor
+            of a base type or implemented interfaces.
+            </summary>
+            <typeparam name="T">The type.</typeparam>
+            <returns></returns>
+        </member>
         <member name="M:MoonSharp.Interpreter.UserData.UnregisterType``1">
             <summary>
-            Unregisters a type
+            Unregisters a type. 
+            WARNING: unregistering types at runtime is a dangerous practice and may cause unwanted errors.
+            Use this only for testing purposes or to re-register the same type in a slightly different way.
+            Additionally, it's a good practice to discard all previous loaded scripts after calling this method.
             </summary>
             <typeparam name="T">The type to be unregistered</typeparam>
         </member>
         <member name="M:MoonSharp.Interpreter.UserData.UnregisterType(System.Type)">
             <summary>
-            Unregisters a type
+            Unregisters a type.
+            WARNING: unregistering types at runtime is a dangerous practice and may cause unwanted errors.
+            Use this only for testing purposes or to re-register the same type in a slightly different way.
+            Additionally, it's a good practice to discard all previous loaded scripts after calling this method.
             </summary>
             <param name="t">The The type to be unregistered</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.UserData.Create(System.Object,MoonSharp.Interpreter.Interop.IUserDataDescriptor)">
+            <summary>
+            Creates a userdata DynValue from the specified object, using a specific descriptor
+            </summary>
+            <param name="o">The object</param>
+            <param name="descr">The descriptor.</param>
+            <returns></returns>
         </member>
         <member name="M:MoonSharp.Interpreter.UserData.Create(System.Object)">
             <summary>
             Creates a userdata DynValue from the specified object
             </summary>
             <param name="o">The object</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.UserData.CreateStatic(MoonSharp.Interpreter.Interop.IUserDataDescriptor)">
+            <summary>
+            Creates a static userdata DynValue from the specified IUserDataDescriptor
+            </summary>
+            <param name="descr">The IUserDataDescriptor</param>
             <returns></returns>
         </member>
         <member name="M:MoonSharp.Interpreter.UserData.CreateStatic(System.Type)">
@@ -1837,11 +3078,12 @@
             <param name="type">The type.</param>
             <param name="mode">The InteropAccessMode.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.UserData.GetExtensionMethodsByName(System.String)">
+        <member name="M:MoonSharp.Interpreter.UserData.GetExtensionMethodsByNameAndType(System.String,System.Type)">
             <summary>
-            Gets all the extension methods which can match a given name
+            Gets all the extension methods which can match a given name and extending a given Type
             </summary>
             <param name="name">The name.</param>
+            <param name="extendedType">The extended type.</param>
             <returns></returns>
         </member>
         <member name="M:MoonSharp.Interpreter.UserData.GetExtensionMethodsChangeVersion">
@@ -1849,6 +3091,29 @@
             Gets a number which gets incremented everytime the extension methods registry changes.
             Use this to invalidate caches based on extension methods
             </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.UserData.GetDescriptorForType``1(System.Boolean)">
+            <summary>
+            Gets the best possible type descriptor for a specified CLR type.
+            </summary>
+            <typeparam name="T">The CLR type for which the descriptor is desired.</typeparam>
+            <param name="searchInterfaces">if set to <c>true</c> interfaces are used in the search.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.UserData.GetDescriptorForType(System.Type,System.Boolean)">
+            <summary>
+            Gets the best possible type descriptor for a specified CLR type.
+            </summary>
+            <param name="type">The CLR type for which the descriptor is desired.</param>
+            <param name="searchInterfaces">if set to <c>true</c> interfaces are used in the search.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.UserData.GetDescriptorForObject(System.Object)">
+            <summary>
+            Gets the best possible type descriptor for a specified CLR object.
+            </summary>
+            <param name="o">The object.</param>
             <returns></returns>
         </member>
         <member name="P:MoonSharp.Interpreter.UserData.UserValue">
@@ -2464,6 +3729,14 @@
         <member name="M:MoonSharp.Interpreter.CallbackArguments.AsInt(System.Int32,System.String)">
             <summary>
             Gets the specified argument as an integer
+            </summary>
+            <param name="argNum">The argument number.</param>
+            <param name="funcName">Name of the function.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.CallbackArguments.AsLong(System.Int32,System.String)">
+            <summary>
+            Gets the specified argument as a long integer
             </summary>
             <param name="argNum">The argument number.</param>
             <param name="funcName">Name of the function.</param>
@@ -3340,6 +4613,162 @@
             Descriptor which acts as a non-containing adapter from IUserDataType to IUserDataDescriptor
             </summary>
         </member>
+        <member name="M:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor.#ctor(System.Type,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor"/> class.
+            </summary>
+            <param name="type">The type.</param>
+            <param name="friendlyName">Name of the friendly.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor.Index(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <summary>
+            Performs an "index" "get" operation.
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="index">The index.</param>
+            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor.SetIndex(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <summary>
+            Performs an "index" "set" operation.
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="index">The index.</param>
+            <param name="value">The value to be set</param>
+            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor.AsString(System.Object)">
+            <summary>
+            Converts this userdata to string
+            </summary>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
+            <summary>
+            Gets a "meta" operation on this userdata. If a descriptor does not support this functionality,
+            it should return "null" (not a nil). 
+            These standard metamethods can be supported (the return value should be a function accepting the
+            classic parameters of the corresponding metamethod):
+            __add, __sub, __mul, __div, __div, __pow, __unm, __eq, __lt, __le, __lt, __len, __concat, 
+            __pairs, __ipairs, __iterator, __call
+            These standard metamethods are supported through other calls for efficiency:
+            __index, __newindex, __tostring
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="metaname">The name of the metamember.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor.IsTypeCompatible(System.Type,System.Object)">
+            <summary>
+            Determines whether the specified object is compatible with the specified type.
+            Unless a very specific behaviour is needed, the correct implementation is a 
+            simple " return type.IsInstanceOfType(obj); "
+            </summary>
+            <param name="type">The type.</param>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="P:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor.Name">
+            <summary>
+            Gets the name of the descriptor (usually, the name of the type described).
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.AutoDescribingUserDataDescriptor.Type">
+            <summary>
+            Gets the type this descriptor refers to
+            </summary>
+        </member>
+        <member name="T:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor">
+            <summary>
+            A user data descriptor which aggregates multiple descriptors and tries dispatching members
+            on them, in order.
+            
+            Used, for example, for objects implementing multiple interfaces but for which no descriptor is 
+            specifically registered.
+            </summary>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.#ctor(System.Collections.Generic.List{MoonSharp.Interpreter.Interop.IUserDataDescriptor},System.Type)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor"/> class.
+            </summary>
+            <param name="descriptors">The descriptors.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.Index(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <summary>
+            Performs an "index" "get" operation.
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="index">The index.</param>
+            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.SetIndex(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue,System.Boolean)">
+            <summary>
+            Performs an "index" "set" operation.
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="index">The index.</param>
+            <param name="value">The value to be set</param>
+            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.AsString(System.Object)">
+            <summary>
+            Converts this userdata to string
+            </summary>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
+            <summary>
+            Gets a "meta" operation on this userdata. If a descriptor does not support this functionality,
+            it should return "null" (not a nil). 
+            These standard metamethods can be supported (the return value should be a function accepting the
+            classic parameters of the corresponding metamethod):
+            __add, __sub, __mul, __div, __div, __pow, __unm, __eq, __lt, __le, __lt, __len, __concat, 
+            __pairs, __ipairs, __iterator, __call
+            These standard metamethods are supported through other calls for efficiency:
+            __index, __newindex, __tostring
+            </summary>
+            <param name="script">The script originating the request</param>
+            <param name="obj">The object (null if a static request is done)</param>
+            <param name="metaname">The name of the metamember.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.IsTypeCompatible(System.Type,System.Object)">
+            <summary>
+            Determines whether the specified object is compatible with the specified type.
+            Unless a very specific behaviour is needed, the correct implementation is a 
+            simple " return type.IsInstanceOfType(obj); "
+            </summary>
+            <param name="type">The type.</param>
+            <param name="obj">The object.</param>
+            <returns></returns>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.Descriptors">
+            <summary>
+            Gets the descriptors aggregated by this object, allowing changes to the descriptor list
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.Name">
+            <summary>
+            Gets the name of the descriptor (usually, the name of the type described).
+            </summary>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.CompositeUserDataDescriptor.Type">
+            <summary>
+            Gets the type this descriptor refers to
+            </summary>
+        </member>
         <member name="T:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor">
             <summary>
             Standard descriptor for userdata types.
@@ -3353,145 +4782,14 @@
             <param name="accessMode">The interop access mode this descriptor uses for members access</param>
             <param name="friendlyName">A human readable friendly name of the descriptor.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.GetVisibilityFromAttributes(System.Reflection.MemberInfo)">
+        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.FillMemberList">
             <summary>
-            Determines whether a 
-            <see cref="T:MoonSharp.Interpreter.Interop.MoonSharpVisibleAttribute"/> is changing visibility of a member
-            to scripts.
-            </summary>
-            <param name="mi">The member to check.</param>
-            <returns>
-            <c>true</c> if visibility is forced visible, 
-            <c>false</c> if visibility is forced hidden or the specified MemberInfo is null,
-            <c>if no attribute was found</c>
-            </returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.Index(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,System.Boolean)">
-            <summary>
-            Performs an "index" "get" operation. This tries to resolve minor variations of member names.
-            </summary>
-            <param name="script">The script originating the request</param>
-            <param name="obj">The object (null if a static request is done)</param>
-            <param name="index">The index.</param>
-            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.TryIndexOnExtMethod(MoonSharp.Interpreter.Script,System.Object,System.String)">
-            <summary>
-            Tries to perform an indexing operation by checking newly added extension methods for the given indexName.
-            </summary>
-            <param name="script">The script.</param>
-            <param name="obj">The object.</param>
-            <param name="indexName">Member name to be indexed.</param>
-            <returns></returns>
-            <exception cref="T:System.NotImplementedException"></exception>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.TryIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
-            <summary>
-            Tries to perform an indexing operation by checking methods and properties for the given indexName
-            </summary>
-            <param name="script">The script.</param>
-            <param name="obj">The object.</param>
-            <param name="indexName">Member name to be indexed.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.SetIndex(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue,System.Boolean)">
-            <summary>
-            Performs an "index" "set" operation. This tries to resolve minor variations of member names.
-            </summary>
-            <param name="script">The script originating the request</param>
-            <param name="obj">The object (null if a static request is done)</param>
-            <param name="index">The index.</param>
-            <param name="value">The value to be set</param>
-            <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.TrySetIndex(MoonSharp.Interpreter.Script,System.Object,System.String,MoonSharp.Interpreter.DynValue)">
-            <summary>
-            Tries to perform an indexing "set" operation by checking methods and properties for the given indexName
-            </summary>
-            <param name="script">The script.</param>
-            <param name="obj">The object.</param>
-            <param name="indexName">Member name to be indexed.</param>
-            <param name="value">The value.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.Camelify(System.String)">
-            <summary>
-            Converts the specified name from underscore_case to camelCase.
-            </summary>
-            <param name="name">The name.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.UpperFirstLetter(System.String)">
-            <summary>
-            Converts the specified name to one with an uppercase first letter (something to Something).
-            </summary>
-            <param name="name">The name.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.AsString(System.Object)">
-            <summary>
-            Converts this userdata to string
-            </summary>
-            <param name="obj">The object.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.ExecuteIndexer(MoonSharp.Interpreter.Interop.StandardUserDataOverloadedMethodDescriptor,MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue,MoonSharp.Interpreter.DynValue)">
-            <summary>
-            Executes the specified indexer method.
-            </summary>
-            <param name="mdesc">The method descriptor</param>
-            <param name="script">The script.</param>
-            <param name="obj">The object.</param>
-            <param name="index">The indexer parameter</param>
-            <param name="value">The dynvalue to set on a setter, or null.</param>
-            <returns></returns>
-            <exception cref="T:System.NotImplementedException"></exception>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)">
-            <summary>
-            Gets a "meta" operation on this userdata. If a descriptor does not support this functionality,
-            it should return "null" (not a nil). 
-            See <see cref="M:MoonSharp.Interpreter.Interop.IUserDataDescriptor.MetaIndex(MoonSharp.Interpreter.Script,System.Object,System.String)"/> for further details.
-            
-            If a method exists marked with <see cref="T:MoonSharp.Interpreter.MoonSharpUserDataMetamethodAttribute"/> for the specific
-            metamethod requested, that method is returned.
-            
-            If the above fails, the following dispatching occur:
-            
-            __add, __sub, __mul, __div, __mod and __unm are dispatched to C# operator overloads (if they exist)
-            __eq is dispatched to System.Object.Equals.
-            __lt and __le are dispatched IComparable.Compare, if the type implements IComparable or IComparable{object}
-            __len is dispatched to Length and Count properties, if those exist.
-            __iterator is handled if the object implements IEnumerable or IEnumerator.
-            __tonumber is dispatched to implicit or explicit conversion operators to standard numeric types.
-            __tobool is dispatched to an implicit or explicit conversion operator to bool. If that fails, operator true is used.
-            
-            <param name="script">The script originating the request</param>
-            <param name="obj">The object (null if a static request is done)</param>
-            <param name="metaname">The name of the metamember.</param>
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.Name">
-            <summary>
-            Gets the name of the descriptor (usually, the name of the type described).
-            </summary>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.Type">
-            <summary>
-            Gets the type this descriptor refers to
+            Fills the member list.
             </summary>
         </member>
         <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.AccessMode">
             <summary>
             Gets the interop access mode this descriptor uses for members access
-            </summary>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataDescriptor.FriendlyName">
-            <summary>
-            Gets a human readable friendly name of the descriptor
             </summary>
         </member>
         <member name="T:MoonSharp.Interpreter.InteropAccessMode">
@@ -3532,34 +4830,44 @@
             No optimization is done, and members are not accessible at all.
             </summary>
         </member>
+        <member name="F:MoonSharp.Interpreter.InteropAccessMode.NoReflectionAllowed">
+            <summary>
+            No reflection is allowed, nor code generation. This is used as a safeguard when registering types which should not
+            use a standard reflection based descriptor - for example for types implementing <see cref="T:MoonSharp.Interpreter.Interop.IUserDataType"/>
+            </summary>
+        </member>
         <member name="F:MoonSharp.Interpreter.InteropAccessMode.Default">
             <summary>
             Use the default access mode
             </summary>
         </member>
-        <member name="T:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor">
+        <member name="T:MoonSharp.Interpreter.Interop.MethodMemberDescriptor">
             <summary>
             Class providing easier marshalling of CLR functions
             </summary>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.TryCreateIfVisible(System.Reflection.MethodBase,MoonSharp.Interpreter.InteropAccessMode)">
+        <member name="M:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.#ctor(System.Reflection.MethodBase,MoonSharp.Interpreter.InteropAccessMode)">
             <summary>
-            Tries to create a new StandardUserDataMethodDescriptor, returning <c>null</c> in case the method is not 
-            visible to script code.
-            </summary>
-            <param name="methodBase">The MethodBase.</param>
-            <param name="accessMode">The <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/></param>
-            <returns>A new StandardUserDataMethodDescriptor or null.</returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.#ctor(System.Reflection.MethodBase,MoonSharp.Interpreter.InteropAccessMode)">
-            <summary>
-            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor"/> class.
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.MethodMemberDescriptor"/> class.
             </summary>
             <param name="methodBase">The MethodBase (MethodInfo or ConstructorInfo) got through reflection.</param>
             <param name="accessMode">The interop access mode.</param>
             <exception cref="T:System.ArgumentException">Invalid accessMode</exception>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.CheckMethodIsCompatible(System.Reflection.MethodBase,System.Boolean)">
+        <member name="M:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.TryCreateIfVisible(System.Reflection.MethodBase,MoonSharp.Interpreter.InteropAccessMode,System.Boolean)">
+            <summary>
+            Tries to create a new MethodMemberDescriptor, returning 
+            <c>null</c> in case the method is not
+            visible to script code.
+            </summary>
+            <param name="methodBase">The MethodBase.</param>
+            <param name="accessMode">The <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/></param>
+            <param name="forceVisibility">if set to <c>true</c> forces visibility.</param>
+            <returns>
+            A new MethodMemberDescriptor or null.
+            </returns>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.CheckMethodIsCompatible(System.Reflection.MethodBase,System.Boolean)">
             <summary>
             Checks if the method is compatible with a standard descriptor
             </summary>
@@ -3573,40 +4881,7 @@
             The method contains pointer parameters, or has a pointer return type
             </exception>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.GetCallback(MoonSharp.Interpreter.Script,System.Object)">
-            <summary>
-            Gets a callback function as a delegate
-            </summary>
-            <param name="script">The script for which the callback must be generated.</param>
-            <param name="obj">The object (null for static).</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.GetCallbackFunction(MoonSharp.Interpreter.Script,System.Object)">
-            <summary>
-            Gets the callback function.
-            </summary>
-            <param name="script">The script for which the callback must be generated.</param>
-            <param name="obj">The object (null for static).</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.GetCallbackAsDynValue(MoonSharp.Interpreter.Script,System.Object)">
-            <summary>
-            Gets the callback function as a DynValue.
-            </summary>
-            <param name="script">The script for which the callback must be generated.</param>
-            <param name="obj">The object (null for static).</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.CreateCallbackDynValue(MoonSharp.Interpreter.Script,System.Reflection.MethodInfo,System.Object)">
-            <summary>
-            Creates a callback DynValue starting from a MethodInfo.
-            </summary>
-            <param name="script">The script.</param>
-            <param name="mi">The mi.</param>
-            <param name="obj">The object.</param>
-            <returns></returns>
-        </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.Callback(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments)">
+        <member name="M:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.Execute(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.ScriptExecutionContext,MoonSharp.Interpreter.CallbackArguments)">
             <summary>
             The internal callback which actually executes the method
             </summary>
@@ -3616,61 +4891,33 @@
             <param name="args">The arguments.</param>
             <returns></returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.CompareTo(MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor)">
+        <member name="M:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.MoonSharp#Interpreter#Interop#BasicDescriptors#IOptimizableDescriptor#Optimize">
             <summary>
-            Compares the current object with another object of the same type.
+            Called by standard descriptors when background optimization or preoptimization needs to be performed.
             </summary>
-            <param name="other">An object to compare with this object.</param>
-            <returns>
-            A value that indicates the relative order of the objects being compared. The return value has the following meanings: Value Meaning Less than zero This object is less than the <paramref name="other" /> parameter.Zero This object is equal to <paramref name="other" />. Greater than zero This object is greater than <paramref name="other" />.
-            </returns>
+            <exception cref="T:MoonSharp.Interpreter.InternalErrorException">Out/Ref params cannot be precompiled.</exception>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.MethodInfo">
+        <member name="P:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.MethodInfo">
             <summary>
             Gets the method information (can be a MethodInfo or ConstructorInfo)
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.AccessMode">
+        <member name="P:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.AccessMode">
             <summary>
             Gets the access mode used for interop
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.IsStatic">
-            <summary>
-            Gets a value indicating whether the described method is static.
-            </summary>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.Name">
-            <summary>
-            Gets the name of the described method
-            </summary>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.IsConstructor">
+        <member name="P:MoonSharp.Interpreter.Interop.MethodMemberDescriptor.IsConstructor">
             <summary>
             Gets a value indicating whether the described method is a constructor
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.ExtensionMethodType">
-            <summary>
-            Gets the type which this extension method extends, null if this is not an extension method.
-            </summary>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.SortDiscriminant">
-            <summary>
-            Gets a sort discriminant to give consistent overload resolution matching in case of perfectly equal scores
-            </summary>
-        </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataMethodDescriptor.Parameters">
-            <summary>
-            Gets the type of the arguments of the underlying CLR function
-            </summary>
-        </member>
-        <member name="T:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor">
+        <member name="T:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor">
             <summary>
             Class providing easier marshalling of CLR properties
             </summary>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.TryCreateIfVisible(System.Reflection.PropertyInfo,MoonSharp.Interpreter.InteropAccessMode)">
+        <member name="M:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.TryCreateIfVisible(System.Reflection.PropertyInfo,MoonSharp.Interpreter.InteropAccessMode)">
             <summary>
             Tries to create a new StandardUserDataPropertyDescriptor, returning <c>null</c> in case the property is not 
             visible to script code.
@@ -3679,25 +4926,25 @@
             <param name="accessMode">The <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/></param>
             <returns>A new StandardUserDataPropertyDescriptor or null.</returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.#ctor(System.Reflection.PropertyInfo,MoonSharp.Interpreter.InteropAccessMode)">
+        <member name="M:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.#ctor(System.Reflection.PropertyInfo,MoonSharp.Interpreter.InteropAccessMode)">
             <summary>
-            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor"/> class.
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor"/> class.
             NOTE: This constructor gives get/set visibility based exclusively on the CLR visibility of the 
             getter and setter methods.
             </summary>
             <param name="pi">The pi.</param>
             <param name="accessMode">The access mode.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.#ctor(System.Reflection.PropertyInfo,MoonSharp.Interpreter.InteropAccessMode,System.Reflection.MethodInfo,System.Reflection.MethodInfo)">
+        <member name="M:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.#ctor(System.Reflection.PropertyInfo,MoonSharp.Interpreter.InteropAccessMode,System.Reflection.MethodInfo,System.Reflection.MethodInfo)">
             <summary>
-            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor"/> class.
+            Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor"/> class.
             </summary>
             <param name="pi">The PropertyInfo.</param>
             <param name="accessMode">The <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/></param>
             <param name="getter">The getter method. Use null to make the property writeonly.</param>
             <param name="setter">The setter method. Use null to make the property readonly.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
+        <member name="M:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.GetValue(MoonSharp.Interpreter.Script,System.Object)">
             <summary>
             Gets the value of the property
             </summary>
@@ -3705,7 +4952,7 @@
             <param name="obj">The object.</param>
             <returns></returns>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
+        <member name="M:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.SetValue(MoonSharp.Interpreter.Script,System.Object,MoonSharp.Interpreter.DynValue)">
             <summary>
             Sets the value of the property
             </summary>
@@ -3713,35 +4960,32 @@
             <param name="obj">The object.</param>
             <param name="v">The value to set.</param>
         </member>
-        <member name="M:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.GetGetterCallbackAsDynValue(MoonSharp.Interpreter.Script,System.Object)">
+        <member name="M:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.MoonSharp#Interpreter#Interop#BasicDescriptors#IOptimizableDescriptor#Optimize">
             <summary>
-            Gets the getter of the property as a DynValue containing a callback
+            Called by standard descriptors when background optimization or preoptimization needs to be performed.
             </summary>
-            <param name="script">The script.</param>
-            <param name="obj">The object.</param>
-            <returns></returns>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.PropertyInfo">
+        <member name="P:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.PropertyInfo">
             <summary>
             Gets the PropertyInfo got by reflection
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.AccessMode">
+        <member name="P:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.AccessMode">
             <summary>
             Gets the <see cref="T:MoonSharp.Interpreter.InteropAccessMode"/>
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.IsStatic">
+        <member name="P:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.IsStatic">
             <summary>
             Gets a value indicating whether the described property is static.
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.Name">
+        <member name="P:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.Name">
             <summary>
             Gets the name of the property
             </summary>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.CanRead">
+        <member name="P:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.CanRead">
             <summary>
             Gets a value indicating whether this instance can be read from
             </summary>
@@ -3749,13 +4993,18 @@
               <c>true</c> if this instance can be read from; otherwise, <c>false</c>.
             </value>
         </member>
-        <member name="P:MoonSharp.Interpreter.Interop.StandardUserDataPropertyDescriptor.CanWrite">
+        <member name="P:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.CanWrite">
             <summary>
             Gets a value indicating whether this instance can be written to.
             </summary>
             <value>
               <c>true</c> if this instance can be written to; otherwise, <c>false</c>.
             </value>
+        </member>
+        <member name="P:MoonSharp.Interpreter.Interop.PropertyMemberDescriptor.MemberAccess">
+            <summary>
+            Gets the types of access supported by this member
+            </summary>
         </member>
         <member name="T:MoonSharp.Interpreter.Execution.ClosureContext">
             <summary>
@@ -5249,6 +6498,11 @@
             Initializes a new instance of the <see cref="T:MoonSharp.Interpreter.Table"/> class.
             </summary>
             <param name="owner">The owner script.</param>
+        </member>
+        <member name="M:MoonSharp.Interpreter.Table.Clear">
+            <summary>
+            Removes all items from the Table.
+            </summary>
         </member>
         <member name="M:MoonSharp.Interpreter.Table.GetIntegralKey(System.Double)">
             <summary>
