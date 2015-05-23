@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace M8.Lua {
     public class LuaScriptsProcess : AssetPostprocessor {
         public const bool defaultActive = true;
-        public const string defaultScriptDir = "LuaScript"; //directory to check for lua scripts, put your lua files in any LuaScript directories to generate them.
+        public const string defaultScriptDir = "LuaScripts"; //directory to check for lua scripts, put your lua files in any LuaScript directories to generate them.
         public const string defaultDestDir = "Assets/Resources/Lua"; //directory to generate text files for lua script for loading via Resources
 
         public const string externalEditorKey = "m8lua_external";
@@ -16,8 +16,6 @@ namespace M8.Lua {
 
         public class AssetPathEnumerator : IEnumerable {
             public IEnumerator GetEnumerator() {
-                string scriptDir = EditorPrefs.GetString(LuaScriptsProcess.scriptDirKey, LuaScriptsProcess.defaultScriptDir);
-
                 string[] dirs = Directory.GetDirectories(Application.dataPath, "*"+scriptDir, SearchOption.AllDirectories);
                 for(int d = 0; d < dirs.Length; d++) {
                     string[] luaFilePaths = Directory.GetFiles(dirs[d], "*.lua", SearchOption.AllDirectories);
@@ -27,9 +25,9 @@ namespace M8.Lua {
             }
         }
 
-        public static string activeKey { get { return M8.EditorExt.Utility.PreferenceKey("lua", "active"); } }
-        public static string scriptDirKey { get { return M8.EditorExt.Utility.PreferenceKey("lua", "scriptDir"); } }
-        public static string destDirKey { get { return M8.EditorExt.Utility.PreferenceKey("lua", "destDir"); } }
+        public static bool isActive { get { return ProjectConfig.GetInt("lua.active", 1) == 1; } set { ProjectConfig.SetInt("lua.active", value ? 1 : 0); } }
+        public static string scriptDir { get { return ProjectConfig.GetString("lua.scriptDir", defaultScriptDir); } set { ProjectConfig.SetString("lua.scriptDir", value); } }
+        public static string destDir { get { return ProjectConfig.GetString("lua.destDir", defaultDestDir); } set { ProjectConfig.SetString("lua.destDir", value); } }
         
 
         private static string GetDestPath(string scriptDir, string destDir, string path) {
@@ -94,12 +92,9 @@ namespace M8.Lua {
         }
 
         public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths) {
-            if(!EditorPrefs.GetBool(activeKey, defaultActive)) return;
+            if(!isActive) return;
 
             bool refreshAssets = false;
-
-            string scriptDir = EditorPrefs.GetString(scriptDirKey, defaultScriptDir);
-            string destDir = EditorPrefs.GetString(destDirKey, defaultDestDir);
 
             for(int i = 0; i < importedAssets.Length; i++) {
                 if(GenerateTextFromLuaFile(scriptDir, destDir, importedAssets[i]))

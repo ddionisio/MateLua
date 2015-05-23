@@ -16,9 +16,9 @@ namespace M8.Lua {
         }
 
         void OnEnable() {
-            mActive = EditorPrefs.GetBool(LuaScriptsProcess.activeKey, LuaScriptsProcess.defaultActive);
-            mScriptDir = EditorPrefs.GetString(LuaScriptsProcess.scriptDirKey, LuaScriptsProcess.defaultScriptDir);
-            mDestDir = EditorPrefs.GetString(LuaScriptsProcess.destDirKey, LuaScriptsProcess.defaultDestDir);
+            mActive = LuaScriptsProcess.isActive;
+            mScriptDir = LuaScriptsProcess.scriptDir;
+            mDestDir = LuaScriptsProcess.destDir;
         }
 
         // Use this for initialization
@@ -31,19 +31,19 @@ namespace M8.Lua {
 
             bool a = EditorGUILayout.Toggle("Active", mActive);
             if(mActive != a)
-                EditorPrefs.SetBool(LuaScriptsProcess.activeKey, mActive = a);
+                LuaScriptsProcess.isActive = mActive = a;
 
             string sd = EditorGUILayout.TextField(new GUIContent("Script Dir", "This is the base directory for the lua files.  You can have multiple folders with this name anywhere in the project, all of them will be condensed into the Dest Dir."), mScriptDir);
             sd = M8.EditorExt.Utility.CleanUpPath(sd, false);
 
             if(mScriptDir != sd)
-                EditorPrefs.SetString(LuaScriptsProcess.scriptDirKey, mScriptDir = sd);
+                LuaScriptsProcess.scriptDir = mScriptDir = sd;
 
             string dd = EditorGUILayout.TextField(new GUIContent("Dest Dir", "This is the destination directory for the lua files.  Normally you want them to be in Resources and its own root directory.  You can modify this depending on how you setup the Lua interpreter."), mDestDir);
             dd = M8.EditorExt.Utility.CleanUpPath(dd, false);
 
             if(mDestDir != dd)
-                EditorPrefs.SetString(LuaScriptsProcess.destDirKey, mDestDir = dd);
+                LuaScriptsProcess.destDir = mDestDir = dd;
 
             M8.EditorExt.Utility.DrawSeparator();
 

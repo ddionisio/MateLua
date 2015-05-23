@@ -38,7 +38,7 @@ namespace M8.Lua {
             mFullpaths = luaPaths.ToArray();
 
             //generate relative paths
-            string scriptDir = EditorPrefs.GetString(LuaScriptsProcess.scriptDirKey, LuaScriptsProcess.defaultScriptDir);
+            string scriptDir = LuaScriptsProcess.scriptDir;
 
             mPaths = new string[mFullpaths.Length];
 
